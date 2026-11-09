@@ -338,6 +338,10 @@ footer.site li{margin:.42rem 0}
 .ai-mic{background:var(--gold-soft);color:var(--emerald-deep);border:1px solid var(--gold)}
 .ai-mic svg,.ai-send svg{width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
 .ai-mic.listening{background:#b3261e;border-color:#b3261e;color:#fff;animation:aiBlink 1s infinite}
+.ai-attach{background:var(--gold-soft);color:var(--emerald-deep);border:1px solid var(--gold);flex:none;width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer}
+.ai-attach svg{width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.ai-attach:disabled{opacity:.45;cursor:not-allowed}
+.ai-userimg{display:block;width:100%;max-width:230px;border-radius:10px;margin-bottom:.4rem}
 .ai-send{background:linear-gradient(135deg,var(--emerald),var(--emerald-deep));color:#fff;border:none}
 .ai-note{margin:0;padding:.5rem .85rem .7rem;font-size:.76rem;line-height:1.45;color:var(--muted);text-align:center;border-top:1px dashed var(--line)}
 .ai-note a{color:var(--emerald);font-weight:600}
@@ -1529,7 +1533,7 @@ body.ur-mode .mnav a,body.ur-mode .mnav button{line-height:1.7}
     <div class="ai-lock-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="5" y="10.5" width="14" height="9.5" rx="2"/><path d="M8 10.5V8a4 4 0 0 1 8 0v2.5"/><circle cx="12" cy="15.2" r="1.4"/></svg></div>
     <h3>Login required</h3>
     <p class="ai-lock-main">AI Assistant use karne ke liye pehle login karein</p>
-    <p>Sign in with Google or your academy account to ask about Shia fiqh, duas and namaz — by voice or text, with book references (Hawala) in every answer.</p>
+    <p>Sign in with Google or your academy account to ask about Shia fiqh, duas and namaz — by voice or text, with book references (Hawala) in every answer. Signed-in users can also send a photo of an Arabic book page for its Urdu translation.</p>
     <div class="ai-lock-btns">
       <button type="button" class="btn btn-emerald" id="ai-login-btn">Login / Create Account</button>
       <button type="button" class="btn btn-google" id="ai-google-btn"><svg viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.1H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.9 1.2 8 3l5.7-5.7C34.3 6.1 29.3 4 24 4 13 4 4 13 4 24s9 20 20 20 20-9 20-20c0-1.3-.1-2.6-.4-3.9z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.9 1.2 8 3l5.7-5.7C34.3 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.1H42V20H24v8h11.3c-.8 2.3-2.3 4.3-4.1 5.6l6.2 5.2C36.9 39.2 44 34 44 24c0-1.3-.1-2.6-.4-3.9z"/></svg><span>Continue with Google</span></button>
@@ -1540,10 +1544,12 @@ body.ur-mode .mnav a,body.ur-mode .mnav button{line-height:1.7}
   <div class="ai-status" id="ai-status" hidden>Listening… speak now</div>
   <form class="ai-inputbar" id="ai-form">
     <input id="ai-input" type="text" placeholder="Ask about Shia fiqh, duas, namaz…" autocomplete="off" aria-label="Type your question" disabled />
+    <button type="button" class="ai-attach" id="ai-attach" aria-label="Send a photo of an Arabic page for its Urdu translation" title="Send a photo of an Arabic page" disabled><svg viewBox="0 0 24 24"><path d="M4 8h3l2-2.5h6L17 8h3a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1Z"/><circle cx="12" cy="14" r="3.4"/></svg></button>
+    <input type="file" id="ai-file" accept="image/*" hidden />
     <button type="button" class="ai-mic" id="ai-mic" aria-label="Ask by voice" disabled><svg viewBox="0 0 24 24"><path d="M12 3a3 3 0 0 1 3 3v5a3 3 0 0 1-6 0V6a3 3 0 0 1 3-3Z"/><path d="M5 11a7 7 0 0 0 14 0"/><path d="M12 18v3"/></svg></button>
     <button type="submit" class="ai-send" aria-label="Send question" disabled><svg viewBox="0 0 24 24"><path d="M22 2 11 13"/><path d="M22 2l-7 20-4-9-9-4 20-7Z"/></svg></button>
   </form>
-  <p class="ai-note">Answers come only from this website's verified Knowledge Center, with the book reference (Hawala) shown. For a personal ruling, ask Qari Muhammad Imran Ali on <a href="#" data-wa="Assalam-o-Alaikum Qari Muhammad Imran Ali! I have a question about Shia fiqh.">WhatsApp</a>.</p>
+  <p class="ai-note">Answers come only from this website's verified Knowledge Center, with the book reference (Hawala) shown. Ask in English, اردو, Roman Urdu or Arabic — the reply (text and voice) comes in the same language. You can also send a photo of an Arabic book page for its Urdu translation. For a personal ruling, ask Qari Muhammad Imran Ali on <a href="#" data-wa="Assalam-o-Alaikum Qari Muhammad Imran Ali! I have a question about Shia fiqh.">WhatsApp</a>.</p>
 </section>
 <div class="toast" id="toast" role="status"></div>
 
@@ -3004,6 +3010,33 @@ document.getElementById("mnav-menu").addEventListener("click", function(){
      on a public page could be copied by anyone.
    - Voice: browser Web Speech API (free) — speech recognition for
      questions, speech synthesis for spoken replies.
+   - SAME-LANGUAGE REPLIES: the language of every question is detected
+     (English, Urdu, Roman Urdu, Arabic) and the reply — text AND
+     voice — is given in that same language. Urdu replies use this
+     website's own verified Urdu translations (the same UR_DICT the
+     EN/اردو toggle uses, applied at sentence level, Hawala included).
+     Roman Urdu replies are that same verified Urdu rendering
+     transliterated mechanically into Roman script. When the admin's
+     Gemini key is present in the session, the full verified answer
+     body is rendered into the question's language by Gemini
+     translation (segment-checked). Nothing is ever translated by
+     guessing: any part with no verified translation and no Gemini key
+     stays in its verified English with a note in the user's language
+     saying so — exactly the policy of the site's Urdu toggle.
+   - IMAGE INPUT: a signed-in user can send a photo of an Arabic page
+     (e.g. a Madaris book). With the admin's Gemini key present in the
+     session, Gemini (multimodal) reads the page; otherwise a free
+     on-device OCR (Tesseract.js, Arabic) reads it and the text is
+     matched against this website's verified Arabic library. The reply
+     always states honestly which method was used; OCR can misread.
+   - I'RAB (tashkeel): every effort is made to show Arabic WITH its
+     vowel marks. Gemini adds full I'rab when a key is present. Without
+     a key, the passage is searched exhaustively in the website's own
+     fully-vowelled verified texts (the Tanzil Quran text, the
+     Duas.org dua/ziyarat texts, the Namaz page) and shown exactly as
+     published there. Free OCR cannot add I'rab to text that is not
+     found in those verified sources, and the reply says so plainly
+     instead of guessing vowel marks — wrong I'rab is never invented.
    - LOGIN-GATED: the assistant works ONLY for users signed in to this
      website (Firebase Auth — Google/Gmail or email & password).
      Signed-out visitors who open the panel see a login prompt
@@ -3425,12 +3458,189 @@ document.getElementById("mnav-menu").addEventListener("click", function(){
     };
   }
 
+  /* ---------------- Same-language replies ----------------
+     The question's language is detected and the reply (text + voice)
+     is given in that same language. Urdu replies use the website's own
+     verified Urdu dictionary (UR_DICT — the same one the EN/اردو toggle
+     applies); text the website has no verified translation for is never
+     translated by guessing — it stays in its verified English with a
+     note in the user's language, the site's own established policy. */
+  var LANGS = {
+    en:    { name: "English",    bcp: "en-US", vp: ["en"] },
+    ur:    { name: "Urdu",       bcp: "ur-PK", vp: ["ur"] },
+    roman: { name: "Roman Urdu", bcp: "ur-PK", vp: ["ur", "en"] },
+    ar:    { name: "Arabic",     bcp: "ar-SA", vp: ["ar"] }
+  };
+  var lastLang = "en";
+  var ROMAN_W = { kya:2, hai:2, hain:2, kaise:2, kese:2, batao:2, bataein:2, btao:2, mujhe:2, namaz:2, wuzu:2, wudu:2, chahiye:2, chahye:2, shukria:2, tarika:2, tareeqa:2, kyun:2, kyon:2, kahan:2, kitna:2, kitne:2, kitni:2, hota:2, hoti:2, karna:2, seekhna:2, parhna:2, pooch:2, sawal:2, jawab:2, masla:2, kitab:2, hawala:2, mera:1, meri:1, mere:1, aap:1, apka:1, dua:1, ka:1, ki:1, ke:1, mein:1, main:1, aur:1, nahi:1, kab:1, kon:1, kaun:1, kis:1, bhi:1, se:1, par:1, ne:1, ho:1, ye:1, yeh:1, wo:1, woh:1, wala:1, wali:1, gaya:1, raha:1, rahi:1, milega:1, lagta:1, zaroor:1, ustad:1, sahib:1, sahab:1, bhai:1 };
+  var URDU_SCRIPT_W = ["ہے","ہیں","میں","کیا","اور","کے","کا","کی","سے","نہیں","آپ","یہ","وہ","بھی","پر","کو","نے","بتائیں","بتاؤ","چاہیے","چاہتا","چاہتی","چاہتے","مجھے","میرا","میری","میرے","ہمارا","کس","کب","کیوں","کون","کیسے","کیسا","پڑھیں","پڑھنا","پڑھتے","کرتا","کرتی","کرتے","رہا","رہی","رہے","گا","گی","گے","والا","والی","والے","لیے","ذریعے","مطلب","یعنی","اگر","مگر","لیکن","کیونکہ","ہوتا","ہوتی","ہوتے","ملتا","ملے","دیں","لیں","تھا","تھی","تھے","ہوگا","ہوگی","جائے","آئے","کھانا","سکے","سکتا","سکتی","دیا","لیا","گیا","گئی","ابھی","بہت","اچھا","براہ","کرم","مہربانی","شکریہ","جزاک"];
+  var ARABIC_SCRIPT_W = ["كيف","لماذا","متى","أين","الذي","التي","هذا","هذه","ذلك","تلك","عند","لدى","يجب","يمكن","هي","هو","في","فيه","عليه","إليه","لأن","حيث","عندما","إذا","لكن","ثم","سوف","قد","لم","لن","أي","من هو","ما هو","ما هي"];
+  function detectLang(text){
+    var s = String(text || "");
+    var arChars = (s.match(/[\u0600-\u06FF]/g) || []).length;
+    var latChars = (s.match(/[A-Za-z]/g) || []).length;
+    if (arChars >= 2 && arChars >= latChars) {
+      /* Urdu vs Arabic script: score both. Urdu wins ties — this
+         academy's audience writes Urdu; Arabic is chosen only when
+         Arabic markers clearly outweigh Urdu ones. */
+      var urScore = 0, arScore = 0;
+      if (/[\u0679\u0688\u0691\u06BE\u06D2]/.test(s)) urScore += 4; /* ٹ ڈ ڑ ھ ے — Urdu-only letters */
+      if (/ھ/.test(s)) urScore += 2; /* do-chashmi heh digraphs are Urdu, not Arabic */
+      var words = s.split(/[\s،۔؟?؛,.:!()«»]+/).filter(Boolean);
+      words.forEach(function(w){
+        if (URDU_SCRIPT_W.indexOf(w) > -1) urScore += 2;
+        if (ARABIC_SCRIPT_W.indexOf(w) > -1) arScore += 2;
+        if (/یں$/.test(w)) urScore += 1; /* Urdu verb ending */
+        if (/^ال/.test(w)) arScore += 0; /* shared — no weight */
+      });
+      if (/(ما هو|ما هي|من هو|كيف|لماذا)/.test(s)) arScore += 3;
+      return { code: arScore > urScore ? "ar" : "ur" };
+    }
+    var score2 = 0;
+    s.toLowerCase().replace(/[^a-z\s]/g, " ").split(/\s+/).forEach(function(t){ if (ROMAN_W[t]) score2 += ROMAN_W[t]; });
+    return { code: score2 >= 3 ? "roman" : "en" };
+  }
+  function urTr(s){
+    try {
+      var D = window.UR_DICT;
+      if (!D) return null;
+      var key = String(s).replace(/\s+/g, " ").trim();
+      return Object.prototype.hasOwnProperty.call(D, key) ? D[key] : null;
+    } catch (e) { return null; }
+  }
+  /* Urdu-ize a text using ONLY the website's verified Urdu dictionary:
+     exact matches first, then verbatim dictionary sentences replaced
+     inside the text (longest first), then the assistant's own chrome
+     prefixes. Anything left stays in its verified English — a
+     translation is never invented. */
+  var UR_PREFIX = { "Simply put: ": "سادہ الفاظ میں: ", "In detail: ": "تفصیل: ", "From the narrations: ": "روایات سے: ", "Check yourself: ": "خود کو پرکھیں: ", "Academy note: ": "اکیڈمی نوٹ: ", "When: ": "وقت: ", "Recited: ": "پڑھی جاتی ہے: ", "For: ": "برائے: ", "Occasion: ": "موقع: ", "Level: ": "درجہ: ", "Objectives: ": "مقاصد: ", "Source: ": "ماخذ: " };
+  var UR_KEYS_SORTED = null;
+  function urSmart(s){
+    var exact = urTr(s);
+    if (exact) return exact;
+    var out = String(s);
+    try {
+      var D = window.UR_DICT;
+      if (D) {
+        if (!UR_KEYS_SORTED) UR_KEYS_SORTED = Object.keys(D).filter(function(k){ return k.length >= 25; }).sort(function(a, b){ return b.length - a.length; });
+        UR_KEYS_SORTED.forEach(function(k){ if (out.indexOf(k) > -1) out = out.split(k).join(D[k]); });
+      }
+    } catch (e) {}
+    Object.keys(UR_PREFIX).forEach(function(p){ if (out.indexOf(p) === 0) out = UR_PREFIX[p] + out.slice(p.length); });
+    return out;
+  }
+  function mostlyLatin(s){
+    var t = String(s || "");
+    var lat = (t.match(/[A-Za-z]/g) || []).length;
+    var ar = (t.match(/[\u0600-\u06FF]/g) || []).length;
+    return lat > 12 && lat > ar;
+  }
+  var GREETING_L = {
+    ur: { title: "السلام علیکم!", paras: ["السلام علیکم! میں اکیڈمی کا AI اسسٹنٹ ہوں۔", "مجھ سے شیعہ فقہ، نماز، وضو، دعاؤں، زیارات اور اسلامی کیلنڈر کے بارے میں پوچھیں — یا کورسز، فیس اور مفت آزمائشی کلاس کے بارے میں۔ میں صرف اس ویب سائٹ کے تصدیق شدہ علمی مرکز سے جواب دیتا ہوں اور ہر جواب کے ساتھ کتاب کا حوالہ دیتا ہوں۔ آپ لکھ کر پوچھ سکتے ہیں یا مائیک دبا کر بول سکتے ہیں۔ آپ عربی کتاب کے صفحے کی تصویر بھی بھیج سکتے ہیں — اس کا اردو ترجمہ کر دیا جائے گا۔"] },
+    roman: { title: "Assalam-o-Alaikum!", paras: ["Assalam-o-Alaikum! Mein academy ka AI Assistant hun.", "Mujh se Shia fiqh, Namaz, Wudu, Duas, Ziyarat aur Islamic calendar ke baray mein poochein — ya courses, fees aur free trial ke baray mein. Mein sirf is website ke verified Knowledge Center se jawab deta hun aur har jawab ke saath kitab ka hawala (Hawala) deta hun. Aap likh kar pooch sakte hain ya mic daba kar bol sakte hain. Aap Arabic kitab ke page ki photo bhi bhej sakte hain — is ka Urdu tarjuma kar diya jayega."] },
+    ar: { title: "السلام عليكم!", paras: ["السلام عليكم! أنا المساعد الذكي للأكاديمية.", "اسألني عن الفقه الشيعي والصلاة والوضوء والأدعية والزيارات والتقويم الإسلامي — أو عن الدورات والرسوم والدرس التجريبي المجاني. أجيب فقط من مركز المعرفة الموثّق في هذا الموقع، وأذكر المرجع الكتابي مع كل جواب. يمكنك الكتابة أو الضغط على الميكروفون والتحدث، ويمكنك أيضاً إرسال صورة لصفحة كتاب عربي لترجمتها إلى الأردية."] }
+  };
+  var THANKS_L = {
+    ur: { paras: ["اللہ آپ کو جزائے خیر دے۔ اگر شیعہ فقہ، قرآن کورسز یا اکیڈمی کے بارے میں کوئی اور سوال ہو تو بس پوچھ لیں — یا مائیک دبا کر بول دیں۔"] },
+    roman: { paras: ["Aap ka bohat shukria — Allah aap ke ilm mein barkat de. Agar Shia fiqh, Quran courses ya academy ke baray mein koi aur sawal ho to bas pooch lein — ya mic daba kar bol dein."] },
+    ar: { paras: ["جزاك الله خيراً، وبارك الله في علمك. إذا كان لديك سؤال آخر عن الفقه الشيعي أو دورات القرآن أو الأكاديمية فاسأل — أو اضغط على الميكروفون وتحدث."] }
+  };
+  var NOTE_BODY = {
+    ur: "نوٹ: اس جواب کا متن اکیڈمی کے تصدیق شدہ مواد سے ہے — جہاں ویب سائٹ پر اس کا تصدیق شدہ اردو ترجمہ موجود تھا وہ لگا دیا گیا ہے؛ باقی متن انگریزی میں اسی لیے ہے کہ غلط ترجمہ کبھی خود سے نہیں بنایا جاتا۔",
+    roman: "Note: Is jawab ka asal text academy ke verified content se English mein hai, kyun ke website par is ka verified Roman Urdu tarjuma mojood nahi — aur ghalat tarjuma khud se nahi banaya jata. Sawal Urdu script mein karein to website ke verified Urdu tarjumay jahan mojood hon, woh lag jate hain.",
+    ar: "ملاحظة: نص هذا الجواب من المحتوى الموثّق لدى الأكاديمية باللغة الإنجليزية، إذ لا توجد له ترجمة عربية موثّقة على هذا الموقع — ولا نضع أبداً ترجمة غير موثّقة."
+  };
+  function fallbackAnswerL(q, lang){
+    if (lang === "ur") return { title: "میرے تصدیق شدہ مواد میں نہیں ملا", paras: ["یہ سوال اکیڈمی کے تصدیق شدہ علمی مرکز کے مواد میں نہیں مل سکا، اور میں کبھی کوئی دینی مسئلہ، حدیث، قرآنی حوالہ یا کتابی حوالہ خود سے نہیں بناتا۔", "اس سوال کے لیے براہ کرم قاری محمد عمران علی سے براہِ راست واٹس ایپ پر پوچھیں — وہ خود آپ کی رہنمائی کریں گے۔ آپ علمی مرکز بھی دیکھ سکتے ہیں، جہاں ہر متن اس کے ماخذ کے ساتھ شائع ہے۔"], hawala: "اس سوال کے لیے اکیڈمی کے تصدیق شدہ مواد میں کوئی کتابی حوالہ موجود نہیں۔", link: { href: "#knowledge", label: "Open the Knowledge Center" }, wa: "Assalam-o-Alaikum Qari Sahib! I have a question: " + q, lang: "ur" };
+    if (lang === "roman") return { title: "Mere verified content mein nahi mila", paras: ["Ye sawal academy ke verified Knowledge Center ke content mein nahi mil saka, aur mein kabhi koi deeni masla, Hadith, Qurani hawala ya kitab ka hawala khud se nahi banata.", "Is sawal ke liye barah-e-karam Qari Muhammad Imran Ali se seedha WhatsApp par poochein — woh khud aap ki rehnumai karein ge. Aap Knowledge Center bhi dekh sakte hain, jahan har text apne source ke saath shaya hai."], hawala: "Is sawal ke liye academy ke verified content mein koi kitab ka hawala mojood nahi.", link: { href: "#knowledge", label: "Open the Knowledge Center" }, wa: "Assalam-o-Alaikum Qari Sahib! I have a question: " + q, lang: "roman" };
+    if (lang === "ar") return { title: "غير موجود في المحتوى الموثّق لديّ", paras: ["لم أجد هذا السؤال في محتوى مركز المعرفة الموثّق لدى الأكاديمية، وأنا لا أخترع أبداً حكماً شرعياً أو حديثاً أو مرجعاً قرآنياً أو مرجعاً كتابياً.", "لهذا السؤال اسأل القارئ محمد عمران علي مباشرة عبر واتساب — وسيرشدك بنفسه. ويمكنك أيضاً تصفح مركز المعرفة، حيث يُنشر كل نص مع مصدره."], hawala: "لا يوجد مرجع كتابي موثّق لهذا السؤال في محتوى الأكاديمية الموثّق.", link: { href: "#knowledge", label: "Open the Knowledge Center" }, wa: "Assalam-o-Alaikum Qari Sahib! I have a question: " + q, lang: "ar" };
+    var a = fallbackAnswer(q); a.lang = "en"; return a;
+  }
+  /* Mechanical Urdu → Roman Urdu transliteration (script conversion of
+     the VERIFIED Urdu text — not a new translation). Roman Urdu has no
+     standard spelling; short-vowel gaps between consonants are filled
+     with 'a', the common convention. */
+  var UR2ROMAN = { "ا":"a","آ":"a","ب":"b","پ":"p","ت":"t","ٹ":"t","ث":"s","ج":"j","چ":"ch","ح":"h","خ":"kh","د":"d","ڈ":"d","ذ":"z","ر":"r","ڑ":"r","ز":"z","ژ":"zh","س":"s","ش":"sh","ص":"s","ض":"z","ط":"t","ظ":"z","ع":"a","غ":"gh","ف":"f","ق":"q","ک":"k","گ":"g","ل":"l","م":"m","ن":"n","ں":"n","و":"o","ہ":"h","ھ":"h","ء":"","ی":"i","ے":"e","ئ":"i","ؤ":"u","ۂ":"h","ۃ":"t","َ":"a","ِ":"i","ُ":"u","ً":"an","ٍ":"in","ٌ":"un","ٰ":"a","ّ":"","ْ":"" };
+  function translitUrdu(s){
+    var out = "", prevCons = false, chars = Array.from(String(s));
+    for (var i = 0; i < chars.length; i++) {
+      var c = chars[i];
+      if (!/[\u0600-\u06FF]/.test(c)) { out += c; prevCons = false; continue; }
+      var r = UR2ROMAN[c];
+      if (r === undefined) { out += c; prevCons = false; continue; }
+      var vowelish = "اآویےًٌٍَُِٰ".indexOf(c) > -1;
+      if (c === "و") r = (i === 0 || !prevCons) ? (prevCons ? "o" : (out === "" || /[\s(]/.test(out.slice(-1)) ? "w" : "o")) : "o";
+      if (c === "ی") { var nx = chars[i + 1]; r = (!nx || !/[\u0600-\u06FF]/.test(nx)) ? "i" : (prevCons ? "i" : "y"); }
+      if (c === "ع") r = prevCons ? "" : "a";
+      if (!vowelish && prevCons) out += "a";
+      out += r;
+      prevCons = !vowelish && r !== "";
+    }
+    return out;
+  }
+  var NOTE_ROMAN_OK = "Note: Ye jawab website ke verified Urdu tarjumay ke alfaaz ko Roman script mein likh kar diya gaya hai — naya tarjuma nahi banaya gaya.";
+  function urduizeAnswer(ans){
+    var untranslated = false;
+    if (ans.title) ans.title = urSmart(ans.title);
+    ans.paras = (ans.paras || []).map(function(p){
+      var u = urSmart(p);
+      if (mostlyLatin(u) && String(p).length > 40) untranslated = true;
+      return u;
+    });
+    if (ans.hawala) ans.hawala = urSmart(ans.hawala);
+    return untranslated;
+  }
+  function localizeAnswer(ans, lang){
+    if (ans === GREETING) { var g = GREETING_L[lang] || GREETING; g.lang = lang; return g; }
+    if (ans === THANKS) { var t = THANKS_L[lang] || THANKS; t.lang = lang; return t; }
+    if (typeof IDENTITY !== "undefined" && ans === IDENTITY) ans = JSON.parse(JSON.stringify(IDENTITY));
+    ans.lang = lang;
+    if (lang === "en") return ans;
+    if (lang === "ur") {
+      if (urduizeAnswer(ans)) ans.paras.push(NOTE_BODY.ur);
+      return ans;
+    }
+    if (lang === "roman") {
+      /* Roman Urdu reply = the website's verified Urdu rendering,
+         transliterated into Roman script. Whatever the dictionary does
+         not cover stays in its verified English, with the note. */
+      var un = urduizeAnswer(ans);
+      var covered = /[\u0600-\u06FF]/.test((ans.paras || []).join(" "));
+      if (ans.title) ans.title = translitUrdu(ans.title);
+      ans.paras = (ans.paras || []).map(function(p){ return translitUrdu(p); });
+      if (ans.hawala) ans.hawala = translitUrdu(ans.hawala);
+      ans.paras.push(covered && !un ? NOTE_ROMAN_OK : NOTE_BODY.roman);
+      return ans;
+    }
+    (ans.paras = ans.paras || []).push(NOTE_BODY[lang] || NOTE_BODY.en);
+    return ans;
+  }
+  /* Urdu / Arabic question words → Latin, ONLY to help matching against
+     the (Latin-keyed) knowledge base; never shown to the user. */
+  var MATCH_MAP = {"نماز":"namaz","وضو":"wudu","دعا":"dua","دعائیں":"duas","زیارت":"ziyarat","قرآن":"quran","قران":"quran","خمس":"khums","زکاۃ":"zakat","زکات":"zakat","روزہ":"fast roza","روزے":"fast","حج":"hajj","اصول":"usool","فروع":"furoo","حدیث":"hadith","کسا":"kisa","کیسے":"how","کیا":"what","ہے":"is","ہیں":"are","بتائیں":"tell","کس":"which","کب":"when","کیوں":"why","کون":"who","عاشورا":"ashura","اربعین":"arbaeen","غدیر":"ghadeer","رمضان":"ramadan","محرم":"muharram","فیس":"fees","ٹرائل":"trial","کورس":"course","کورسز":"courses","پڑھتے":"prayed","سجدہ":"sujud","رکوع":"ruku","اذان":"adhan","اقامہ":"iqamah","تشہد":"tashahhud","قنوت":"qunut","تسبیح":"tasbihat","الصلاة":"namaz","الصلاه":"namaz","الوضوء":"wudu","الدعاء":"dua","القرآن":"quran","كيف":"how","لماذا":"why","متى":"when","الزكاة":"zakat","الصوم":"fast","الحج":"hajj","الخمس":"khums","الزيارة":"ziyarat","الأذان":"adhan"};
+  function matchForm(s){
+    return String(s || "").split(/\s+/).map(function(w){
+      var clean = w.replace(/[۔،؟?؛,.:!()«»"ـ]/g, "");
+      return MATCH_MAP[clean] || w;
+    }).join(" ");
+  }
+  function isArabicPassage(q){
+    var s = String(q || "");
+    var ar = (s.match(/[\u0600-\u06FF]/g) || []).length;
+    var lat = (s.match(/[A-Za-z]/g) || []).length;
+    if (ar < 15 || ar < lat) return false;
+    if (s.split(/\s+/).filter(Boolean).length < 4) return false;
+    if (/[؟?]/.test(s)) return false;
+    if (/(کیا|کیسے|کیوں|کب|کون|کہاں|بتائیں|چاہیے|ما هو|ما هي|كيف|لماذا|متى|أين|من هو)/.test(s)) return false;
+    return true;
+  }
+
   /* ---------------- Matching ---------------- */
   var SYN = { namaz: "prayer salah", salah: "prayer namaz", pray: "prayer namaz salah", roza: "fast sawm", sawm: "fast roza", roze: "fast sawm", wuzu: "wudu", wudhu: "wudu", dua: "duas", duas: "dua", prayers: "prayer", imams: "imam", sehri: "suhoor", iftaar: "iftar", kuran: "quran", koran: "quran", masla: "masala issue question", sawal: "question" };
   var FATWA_RE = /(halal|haram|permissible|allowed|can i|should i|is it ok|is it okay|valid|invalid|breaks my|wajib on|makruh|sinful|commit a sin)/;
   function normQ(s){ return " " + String(s || "").toLowerCase().replace(/['’]/g, "").replace(/[^a-z0-9\u0600-\u06FF]+/g, " ").replace(/\s+/g, " ").trim() + " "; }
   function findAnswer(raw){
-    var nq = normQ(raw);
+    var nq = normQ(matchForm(raw));
     var tokens = nq.trim().split(/\s+/).filter(Boolean);
     if (!tokens.length) return null;
     if (tokens.length <= 4 && tokens.some(function(t){ return ["salam","assalam","assalamualaikum","hello","hi","hey","aoa"].indexOf(t) > -1; })) return GREETING;
@@ -3473,8 +3683,8 @@ document.getElementById("mnav-menu").addEventListener("click", function(){
     /* No-op by design: the key is never fetched from a shared store. */
     if (typeof window.__aiGeminiKey !== "string") window.__aiGeminiKey = window.__aiGeminiKey || "";
   }
-  var GEMINI_SYS = "You are the AI Assistant of Shia Online Quran Academy (based in Faisalabad, Pakistan; one-to-one online Quran classes worldwide; WhatsApp +92 307 4348899; founder and teacher Qari Muhammad Imran Ali). Answer briefly and helpfully, in plain language. STRICT RULES: (1) Never issue a personal fatwa or binding religious ruling. For Shia fiqh questions give only general educational information, and always advise the user to follow their own Marja-e-Taqlid and to ask Qari Muhammad Imran Ali on WhatsApp +92 307 4348899 for personal rulings. (2) Never invent a Hadith, a Quranic verse, a book name, an author or a page number. Name a book reference only if you are certain of it; otherwise say plainly that you do not have a verified reference. (3) If you do not know something, say so honestly. Keep the answer under 220 words.";
-  function askGemini(q){
+  var GEMINI_SYS = "You are the AI Assistant of Shia Online Quran Academy (based in Faisalabad, Pakistan; one-to-one online Quran classes worldwide; WhatsApp +92 307 4348899; founder and teacher Qari Muhammad Imran Ali). Answer briefly and helpfully, in plain language. STRICT RULES: (1) Never issue a personal fatwa or binding religious ruling. For Shia fiqh questions give only general educational information, and always advise the user to follow their own Marja-e-Taqlid and to ask Qari Muhammad Imran Ali on WhatsApp +92 307 4348899 for personal rulings. (2) Never invent a Hadith, a Quranic verse, a book name, an author or a page number. Name a book reference only if you are certain of it; otherwise say plainly that you do not have a verified reference. (3) If you do not know something, say so honestly. (4) Always reply in the SAME language as the user's message: English question → English reply; Urdu (script) → Urdu; Roman Urdu → Roman Urdu; Arabic → Arabic. (5) When the user shares Arabic text (typed or in a photo) for translation: first reproduce the Arabic WITH full I'rab (tashkeel — zabar, zer, pesh, tashdeed, jazm, tanween) wherever the original lacks vowel marks, making every effort to vowel it fully; never guess an I'rab or a meaning you are unsure of — say plainly where you are unsure. Keep the answer under 220 words unless you are transcribing and translating a book page.";
+  function askGemini(q, langName){
     var key = String(window.__aiGeminiKey || "").trim();
     if (!key) return Promise.resolve(null);
     var ctrl = ("AbortController" in window) ? new AbortController() : null;
@@ -3485,7 +3695,7 @@ document.getElementById("mnav-menu").addEventListener("click", function(){
       headers: { "Content-Type": "application/json", "x-goog-api-key": key },
       body: JSON.stringify({
         system_instruction: { parts: [{ text: GEMINI_SYS }] },
-        contents: [{ parts: [{ text: q }] }],
+        contents: [{ parts: [{ text: langName ? (q + "\n\n[Instruction: reply entirely in " + langName + " — the same language as the question.]") : q }] }],
         generationConfig: { maxOutputTokens: 700, temperature: 0.4 }
       })
     }).then(function(r){ return r.ok ? r.json() : Promise.reject(new Error("status " + r.status)); })
@@ -3506,6 +3716,250 @@ document.getElementById("mnav-menu").addEventListener("click", function(){
     };
   }
 
+  /* ---------------- Arabic passages, photos & I'rab ----------------
+     Maximum-effort I'rab, honestly: (1) with the session Gemini key the
+     full AI vowels, translates (Urdu) and explains; (2) without a key,
+     the passage is searched EXHAUSTIVELY in this website's own fully-
+     vowelled verified Arabic — the whole Tanzil Quran text, all
+     Duas.org dua/ziyarat lines, the Namaz page, the daily duas — and
+     shown letter-for-letter as published there (that IS its I'rab);
+     (3) a photo without a key is first read by free on-device OCR
+     (Tesseract, Arabic) and then matched the same way. OCR cannot add
+     I'rab and no vowel mark or Urdu translation is ever guessed. */
+  function normAr(s){
+    return String(s || "")
+      .replace(/[\u064B-\u065F\u0670\u0640\u06D6-\u06ED]/g, "")
+      .replace(/[إأآٱ]/g, "ا").replace(/ى/g, "ي").replace(/ة/g, "ه").replace(/ؤ/g, "و").replace(/ئ/g, "ي")
+      .replace(/\u06CC/g, "ي").replace(/\u06A9/g, "ك").replace(/\u06C1/g, "ه")
+      .replace(/[^\u0621-\u064A\s]/g, " ")
+      .replace(/\s+/g, " ").trim();
+  }
+  function arWords(s){ var n = normAr(s); return n ? n.split(" ") : []; }
+  var AR_CORPUS = null, AR_ASYNC_DONE = false;
+  function addToCorpus(name, ar, en, hawala, link){
+    if (!ar || !AR_CORPUS) return;
+    var w = arWords(ar);
+    if (w.length < 2) return;
+    AR_CORPUS.push({ name: name, ar: ar, en: en || "", hawala: hawala, link: link || null, words: w, norm: w.join(" ") });
+  }
+  function buildCorpus(){
+    if (AR_CORPUS) return;
+    AR_CORPUS = [];
+    if (typeof DUAS_DAILY !== "undefined") DUAS_DAILY.forEach(function(d){ addToCorpus(d.n, d.ar, (d.tr ? d.tr + " — " : "") + d.en, d.src + " · Daily Duas collection, Knowledge Center on this website.", { href: "#reader/dua/" + encodeURIComponent(d.n), label: "Read this dua" }); });
+    if (typeof NAMAZ !== "undefined") NAMAZ.sections.forEach(function(s){ (s.lines || []).forEach(function(l){ addToCorpus("Shia Namaz: " + s.h, l[0], l[1], NAMAZ_HAWALA, { href: "#kcat/namaz", label: "Open the Shia Namaz page" }); }); });
+  }
+  function addAsyncCorpus(){
+    buildCorpus();
+    if (AR_ASYNC_DONE) return Promise.resolve();
+    AR_ASYNC_DONE = true;
+    var jobs = [];
+    if (typeof loadRelTexts === "function") jobs.push(loadRelTexts().then(function(ok){
+      if (!ok || !window.REL_TEXTS) return;
+      Object.keys(window.REL_TEXTS).forEach(function(name){
+        var item = window.REL_TEXTS[name];
+        (item.parts || []).forEach(function(part){ (part.segs || []).forEach(function(seg){ addToCorpus(name, seg[0], seg[2], readerHawala(name), { href: "#reader/dua/" + encodeURIComponent(name), label: "Read " + name }); }); });
+      });
+    }).catch(function(){}));
+    if (typeof loadQuran === "function") jobs.push(loadQuran().then(function(ok){
+      if (!ok || !window.QURAN_TEXT) return;
+      window.QURAN_TEXT.forEach(function(surah, si){
+        (surah || []).forEach(function(ayah, ai){ addToCorpus("The Holy Quran — Surah " + (si + 1) + ", Ayah " + (ai + 1), ayah, "", QURAN_HAWALA, { href: "#library", label: "Open the Digital Library" }); });
+      });
+    }).catch(function(){}));
+    return Promise.all(jobs);
+  }
+  function matchScore(iw, e){
+    var ew = e.words;
+    var iStr = " " + iw.join(" ") + " ", eStr = " " + e.norm + " ";
+    if (ew.length >= 3 && iw.length >= ew.length && iStr.indexOf(eStr) > -1) return 1;
+    if (iw.length >= 4 && eStr.indexOf(iStr) > -1) return 1;
+    var grams = [], i, hit = 0;
+    for (i = 0; i + 4 <= iw.length; i++) grams.push(iw.slice(i, i + 4).join(" "));
+    if (!grams.length) return 0;
+    grams.forEach(function(g){ if (eStr.indexOf(" " + g + " ") > -1) hit++; });
+    return hit >= 2 ? hit / grams.length : 0;
+  }
+  function bestMatch(iw){
+    var best = null;
+    (AR_CORPUS || []).forEach(function(e){
+      var s = matchScore(iw, e);
+      if (s > 0 && (!best || s > best.score)) best = { score: s, entry: e };
+    });
+    return (best && best.score >= 0.6) ? best.entry : null;
+  }
+  function matchVerifiedArabic(text){
+    var iw = arWords(text);
+    if (iw.length < 4) return Promise.resolve(null);
+    buildCorpus();
+    var quick = bestMatch(iw);
+    if (quick) return Promise.resolve(quick);
+    return addAsyncCorpus().then(function(){ return bestMatch(iw); });
+  }
+  var OCR_METHOD_NOTE = {
+    en: "Method used: free on-device OCR (Tesseract, Arabic) — no Gemini key is active in this session. OCR can misread Arabic letters, especially in book print, so what it read was checked against the academy's verified Arabic library before answering.",
+    ur: "طریقہ: مفت آن ڈیوائس OCR (Tesseract، عربی) استعمال ہوا — اس سیشن میں Gemini key فعال نہیں۔ OCR عربی حروف کو غلط پڑھ سکتا ہے، خاص طور پر کتابی چھپائی میں، اس لیے جو کچھ پڑھا گیا اسے جواب سے پہلے اکیڈمی کی تصدیق شدہ عربی لائبریری سے ملایا گیا۔",
+    roman: "Tareeqa: free on-device OCR (Tesseract, Arabic) use hua — is session mein Gemini key active nahi. OCR Arabic haroof ko ghalat parh sakta hai, khaas taur par kitabi print mein, is liye jo kuch parha gaya usay jawab se pehle academy ki verified Arabic library se milaya gaya.",
+    ar: "الطريقة المستخدمة: OCR مجاني على الجهاز (Tesseract، العربية) — لا يوجد مفتاح Gemini مفعّل في هذه الجلسة. قد يخطئ OCR في قراءة الحروف العربية، خاصة في طباعة الكتب، لذا قوبل ما قرأه بمكتبة الأكاديمية العربية الموثّقة قبل الإجابة."
+  };
+  var FOUND_NOTE = {
+    en: "This passage was found in the academy's verified Arabic library, so the Arabic below is shown exactly as published on this website — with its full I'rab (zabar, zer, pesh, tashdeed, jazm, tanween). The verified meaning published with it appears under the Arabic. Its full Urdu translation is not part of the website's verified content, so it is not guessed here — for the Urdu translation, ask Qari Muhammad Imran Ali on WhatsApp.",
+    ur: "یہ عبارت اکیڈمی کی تصدیق شدہ عربی لائبریری میں مل گئی، اس لیے نیچے کی عربی بالکل ویسی ہی ہے جیسی اس ویب سائٹ پر شائع ہے — مکمل اعراب (زبر، زیر، پیش، تشدید، جزم، تنوین) کے ساتھ۔ اس کے ساتھ شائع شدہ تصدیق شدہ مفہوم عربی کے نیچے دیا گیا ہے۔ اس کا مکمل اردو ترجمہ ویب سائٹ کے تصدیق شدہ مواد کا حصہ نہیں، اس لیے اندازے سے نہیں بنایا گیا — اردو ترجمے کے لیے قاری محمد عمران علی سے واٹس ایپ پر پوچھیں۔",
+    roman: "Ye ibarat academy ki verified Arabic library mein mil gayi, is liye neeche ki Arabic bilkul waisi hi hai jaisi is website par shaya hai — mukammal I'rab (zabar, zer, pesh, tashdeed, jazm, tanween) ke saath. Is ke saath shaya verified meaning Arabic ke neeche diya gaya hai. Is ka mukammal Urdu tarjuma website ke verified content ka hissa nahi, is liye andazay se nahi banaya gaya — Urdu tarjumay ke liye Qari Muhammad Imran Ali se WhatsApp par poochein.",
+    ar: "وُجد هذا النص في مكتبة الأكاديمية العربية الموثّقة، لذا يظهر النص العربي أدناه كما هو منشور على هذا الموقع تماماً — مع إعرابه الكامل. ويظهر المعنى الموثّق المنشور معه تحت النص العربي. أما ترجمته الكاملة إلى الأردية فليست جزءاً من المحتوى الموثّق للموقع، فلا تُخترع هنا — لطلب الترجمة اسأل القارئ محمد عمران علي عبر واتساب."
+  };
+  var NOKEY_NOTE = {
+    en: "This Arabic was not found in the website's verified Arabic library (the Holy Quran text, the Duas & Ziyarat and the Namaz page published here), and the full AI (Gemini) is not active in this session. Adding I'rab (zabar, zer, pesh, tashdeed) and translating Arabic reliably is language-model work: guessing the vowel marks or the meaning could make both wrong, so nothing is guessed. Please send the same text or photo to Qari Muhammad Imran Ali on WhatsApp — he will add the I'rab and explain it himself.",
+    ur: "یہ عربی ویب سائٹ کی تصدیق شدہ عربی لائبریری (قرآن مجید کا متن، یہاں شائع شدہ دعائیں و زیارات اور نماز کا صفحہ) میں نہیں ملی، اور اس سیشن میں مکمل AI (Gemini) فعال نہیں ہے۔ اعراب (زبر، زیر، پیش، تشدید) لگانا اور عربی کا درست ترجمہ کرنا زبان کے ماڈل کا کام ہے: اندازے سے اعراب یا مفہوم لگانے سے دونوں غلط ہو سکتے ہیں، اس لیے کچھ بھی اندازے سے نہیں لگایا گیا۔ براہ کرم یہی عبارت یا تصویر قاری محمد عمران علی کو واٹس ایپ پر بھیجیں — وہ خود اعراب لگا کر سمجھا دیں گے۔",
+    roman: "Ye Arabic website ki verified Arabic library (Quran ka text, yahan shaya Duas-o-Ziyarat aur Namaz ka page) mein nahi mili, aur is session mein full AI (Gemini) active nahi hai. I'rab (zabar, zer, pesh, tashdeed) lagana aur Arabic ka durust tarjuma karna language model ka kaam hai: andazay se I'rab ya matlab lagane se dono ghalat ho sakte hain, is liye kuch bhi andazay se nahi lagaya gaya. Barah-e-karam yehi ibarat ya photo Qari Muhammad Imran Ali ko WhatsApp par bhejein — woh khud I'rab laga kar samjha dein ge.",
+    ar: "لم يُعثر على هذا النص العربي في مكتبة الموقع العربية الموثّقة (نص القرآن الكريم والأدعية والزيارات وصفحة الصلاة المنشورة هنا)، والذكاء الكامل (Gemini) غير مفعّل في هذه الجلسة. إن وضع الإعراب وترجمة العربية بدقة عملُ نموذج لغوي: فتخمين الحركات أو المعنى قد يجعلهما خاطئين، فلا يُخمَّن شيء. أرسل النص أو الصورة نفسه إلى القارئ محمد عمران علي عبر واتساب، وسيضع الإعراب ويشرحه بنفسه."
+  };
+  var NO_HAWALA_L = {
+    en: NO_HAWALA,
+    ur: "اس عبارت کے لیے اکیڈمی کے تصدیق شدہ مواد میں کتابی حوالہ درج نہیں — قاری محمد عمران علی سے واٹس ایپ پر تصدیق کر لیں۔",
+    roman: "Is ibarat ke liye academy ke verified content mein kitab ka hawala darj nahi — Qari Muhammad Imran Ali se WhatsApp par tasdeeq kar lein.",
+    ar: "لا يوجد مرجع كتابي مسجل لهذا النص في المحتوى الموثّق لدى الأكاديمية — تحقق من القارئ محمد عمران علي عبر واتساب."
+  };
+  function verifiedArabicAnswer(m, via, ocrText, lang, geminiFailed){
+    var L = LANGS[lang] ? lang : "en";
+    var paras = [];
+    if (via === "image") paras.push(OCR_METHOD_NOTE[L]);
+    if (geminiFailed) paras.push("Note: the full AI (Gemini) could not be reached just now, so the free verified-library method was used instead.");
+    paras.push(FOUND_NOTE[L]);
+    return {
+      title: m.name,
+      paras: paras,
+      arabic: [{ ar: m.ar, en: m.en ? ("Verified meaning published on this website: " + m.en) : "A verse of the Holy Quran — the Arabic above is exactly as published in this website's Library (Tanzil text, Uthmani script), with its full vowel marks." }],
+      hawala: m.hawala,
+      link: m.link,
+      wa: TEACHER_WA,
+      lang: L
+    };
+  }
+  function noMatchArabicAnswer(via, lang, ocrText, geminiFailed){
+    var L = LANGS[lang] ? lang : "en";
+    var paras = [];
+    if (via === "image") paras.push(OCR_METHOD_NOTE[L]);
+    if (geminiFailed) paras.push("Note: the full AI (Gemini) could not be reached just now, so the free verified-library method was used instead.");
+    paras.push(NOKEY_NOTE[L]);
+    var ans = {
+      title: L === "ur" ? "عربی موصول ہوئی — اعراب و ترجمے کے لیے مکمل AI درکار ہے" : L === "roman" ? "Arabic mil gayi — I'rab aur tarjumay ke liye full AI chahiye" : L === "ar" ? "وصل النص العربي — الإعراب والترجمة يحتاجان إلى الذكاء الكامل" : "Arabic received — I'rab & translation need the full AI",
+      paras: paras,
+      hawala: NO_HAWALA_L[L],
+      wa: TEACHER_WA,
+      lang: L
+    };
+    if (ocrText) ans.arabic = [{ ar: ocrText, en: "The Arabic above is exactly what the free OCR read from your photo — it may contain reading errors, and no I'rab has been added to it, because adding vowel marks by guessing could make them wrong." }];
+    return ans;
+  }
+  function ocrUnreadableAnswer(geminiFailed){
+    return {
+      title: "The photo could not be read",
+      paras: ["The Arabic text in this photo could not be read clearly" + (geminiFailed ? " — the full AI (Gemini) could not be reached just now, and the free OCR could not read it either" : " by the free on-device OCR (Tesseract), which can struggle with book print, shadows, glare and tilted pages") + ". Nothing has been guessed. Please retake the photo straight-on, in good light, with the page filling the frame — or send the photo to Qari Muhammad Imran Ali on WhatsApp."],
+      hawala: "No book reference — the page could not be read, so no book is named.",
+      wa: TEACHER_WA,
+      lang: "en"
+    };
+  }
+  var IMG_TASK = "You are given a photo of a page of Arabic text, possibly from an Islamic seminary (Madaris) book. Do these tasks in order: (1) Transcribe the Arabic text exactly as written on the page. (2) I'RAB: if the printed text lacks vowel marks, reproduce the Arabic WITH full I'rab (tashkeel — zabar/fatha, zer/kasra, pesh/damma, tashdeed/shadda, jazm/sukoon, tanween) added, making every possible effort to vowel it completely and correctly so it is easy to read; if you are genuinely unsure of the correct I'rab of a word, leave that word unvowelled and say so in one short Urdu sentence — never guess vowel marks. (3) Give the URDU translation of the text. (4) Give a short explanation (tafseel) in Urdu. (5) On the final line write exactly 'Kitab: <name>' if the book is clearly identifiable from the page itself (printed title, header or running head) — real Madaris / hawza books only; otherwise write 'Kitab: not identifiable from this page'. Never invent a book name, author, volume or page number. If the image is unclear or the Arabic cannot be read, reply with 'UNREADABLE' followed by one short sentence in Urdu explaining the problem. Apart from the Arabic text itself, reply in Urdu.";
+  var TEXT_TASK = "The user has pasted a passage of Arabic text (typed). Do these tasks in order: (1) Reproduce the Arabic WITH full I'rab (tashkeel — zabar/fatha, zer/kasra, pesh/damma, tashdeed/shadda, jazm/sukoon, tanween), making every possible effort to vowel it completely and correctly so it is easy to read aloud; where the passage is a known Quranic verse or published dua whose vowelled text is certain, give it exactly. If you are genuinely unsure of the correct I'rab of a word, leave that word unvowelled and say so in one short Urdu sentence — never guess vowel marks. (2) Give the URDU translation of the passage. (3) Give a short explanation (tafseel) in Urdu. (4) On the final line write exactly 'Kitab: <name>' only if the passage is certainly from a named real book you can identify with confidence; otherwise write 'Kitab: not identifiable'. Never invent a book name, author, volume or page number. Apart from the Arabic text itself, reply in Urdu. The Arabic passage is:";
+  function geminiCall(parts, maxTokens){
+    var key = String(window.__aiGeminiKey || "").trim();
+    if (!key) return Promise.resolve(null);
+    var ctrl = ("AbortController" in window) ? new AbortController() : null;
+    var timer = ctrl ? setTimeout(function(){ ctrl.abort(); }, 40000) : null;
+    return fetch("https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent", {
+      method: "POST",
+      signal: ctrl ? ctrl.signal : undefined,
+      headers: { "Content-Type": "application/json", "x-goog-api-key": key },
+      body: JSON.stringify({
+        system_instruction: { parts: [{ text: GEMINI_SYS }] },
+        contents: [{ parts: parts }],
+        generationConfig: { maxOutputTokens: maxTokens || 1500, temperature: 0.3 }
+      })
+    }).then(function(r){ return r.ok ? r.json() : Promise.reject(new Error("status " + r.status)); })
+      .then(function(j){
+        if (timer) clearTimeout(timer);
+        var ps = j && j.candidates && j.candidates[0] && j.candidates[0].content && j.candidates[0].content.parts;
+        var t = ps ? ps.map(function(p){ return p.text || ""; }).join("").trim() : "";
+        return t || null;
+      })
+      .catch(function(){ if (timer) clearTimeout(timer); return null; });
+  }
+  /* Full-body same-language rendering via the session Gemini key:
+     translates the VERIFIED answer (title, paragraphs, and the English
+     glosses under Arabic lines) into the question's language — nothing
+     added or removed, book names and references kept. Used only when
+     the admin key is present in this session; otherwise the verified
+     text + the website's own Urdu dictionary (for Urdu) is what the
+     user gets, with an honest note. Returns null on any mismatch. */
+  function geminiTranslate(ans, lang){
+    var segs = [];
+    if (ans.title) segs.push(ans.title);
+    (ans.paras || []).forEach(function(p){ segs.push(p); });
+    (ans.arabic || []).forEach(function(l){ if (l.en) segs.push(l.en); });
+    if (!segs.length) return Promise.resolve(null);
+    var prompt = "Translate each segment below faithfully into " + LANGS[lang].name + ". The segments are separated by a line containing only the character §. Keep every § separator line exactly as it is, and keep the number of segments identical. Do not add, remove, shorten or change any religious content, names, book titles, Quranic references or numbers. Output only the translation.\n\n" + segs.join("\n§\n");
+    return geminiCall([{ text: prompt }], 1600).then(function(t){
+      if (!t) return null;
+      var parts = t.split(/\n?\s*§\s*\n?/).map(function(x){ return x.trim(); }).filter(function(x, i, a){ return x !== "" || a.length === segs.length; });
+      if (parts.length !== segs.length) return null;
+      var out = JSON.parse(JSON.stringify(ans));
+      var i = 0;
+      if (out.title) out.title = parts[i++];
+      out.paras = (ans.paras || []).map(function(){ return parts[i++]; });
+      (out.arabic || []).forEach(function(l){ if (l.en) l.en = parts[i++]; });
+      out.lang = lang;
+      return out;
+    }).catch(function(){ return null; });
+  }
+  function askGeminiArabic(kind, text, b64){
+    var parts = [{ text: kind === "image" ? IMG_TASK : (TEXT_TASK + "\n\n" + text) }];
+    if (b64) parts.push({ inline_data: { mime_type: "image/jpeg", data: b64 } });
+    return geminiCall(parts, 1500).then(function(t){
+      if (!t) return null;
+      if (/^UNREADABLE/i.test(t)) {
+        return { title: "The photo could not be read", paras: [t.replace(/^UNREADABLE\s*/i, "").trim() || "The Arabic in this photo could not be read clearly. Please retake it straight-on, in good light.", "Nothing has been guessed. You can also send the photo to Qari Muhammad Imran Ali on WhatsApp."], hawala: "No book reference — the page could not be read, so no book is named.", wa: TEACHER_WA, lang: "ur" };
+      }
+      var haw = null;
+      var paras = t.split(/\n+/).map(function(s){ return s.trim(); }).filter(Boolean).filter(function(line){
+        var m = line.match(/^(Kitab|Book|کتاب|الكتاب)\s*[:：]\s*(.+)$/);
+        if (m) { var v = m[2].trim(); if (!/not identifiable|شناخت نہیں|ناقابلِ شناخت|غير قابل/i.test(v)) haw = v; return false; }
+        return true;
+      });
+      return {
+        title: kind === "image" ? "Arabic page — I'rab, Urdu translation & explanation (AI)" : "Arabic text — I'rab, Urdu translation & explanation (AI)",
+        paras: ["This answer was produced by the full AI (Google Gemini) with the academy's session key: it read the Arabic, added I'rab (vowel marks) where the original had none, and translated it into Urdu. AI can still make mistakes — for a final check or a ruling, confirm with Qari Muhammad Imran Ali on WhatsApp."].concat(paras),
+        hawala: haw ? ("Book identified from the page itself: " + haw + " — named only because the page identifies it; no reference has been invented.") : "No book could be identified from the page itself, so no book name is given — a reference is never invented.",
+        wa: TEACHER_WA,
+        lang: "ur"
+      };
+    });
+  }
+  /* Free on-device OCR (Tesseract.js, Arabic) — loaded only when needed. */
+  var tessPromise = null, tessWorker = null;
+  function loadTesseract(){
+    if (window.Tesseract) return Promise.resolve(true);
+    if (!tessPromise) tessPromise = new Promise(function(res){
+      var sc = document.createElement("script");
+      sc.src = "https://cdn.jsdelivr.net/npm/tesseract.js@5.0.5/dist/tesseract.min.js";
+      sc.onload = function(){ res(!!window.Tesseract); };
+      sc.onerror = function(){ res(false); };
+      document.head.appendChild(sc);
+    });
+    return tessPromise;
+  }
+  function runOcr(dataUrl){
+    return loadTesseract().then(function(ok){
+      if (!ok) throw new Error("tesseract unavailable");
+      if (tessWorker) return tessWorker.recognize(dataUrl);
+      return window.Tesseract.createWorker("ara").then(function(w){ tessWorker = w; return w.recognize(dataUrl); });
+    }).then(function(r){ return (r && r.data && r.data.text) || ""; });
+  }
+  function setAiStatus(txt){
+    if (!txt) { status.hidden = true; return; }
+    status.textContent = txt; status.hidden = false;
+  }
+
   /* ---------------- Chat UI ---------------- */
   var fab = document.getElementById("ai-fab");
   var panel = document.getElementById("ai-panel");
@@ -3513,6 +3967,8 @@ document.getElementById("mnav-menu").addEventListener("click", function(){
   var form = document.getElementById("ai-form");
   var input = document.getElementById("ai-input");
   var micBtn = document.getElementById("ai-mic");
+  var attachBtn = document.getElementById("ai-attach");
+  var fileInput = document.getElementById("ai-file");
   var status = document.getElementById("ai-status");
   var soundBtn = document.getElementById("ai-sound");
   var chipsBox = document.getElementById("ai-chips");
@@ -3535,6 +3991,7 @@ document.getElementById("mnav-menu").addEventListener("click", function(){
     panel.classList.toggle("locked", !on);
     input.disabled = !on;
     micBtn.disabled = !on;
+    if (attachBtn) attachBtn.disabled = !on;
     if (sendBtn) sendBtn.disabled = !on;
     if (!on) {
       if ("speechSynthesis" in window) { try { window.speechSynthesis.cancel(); } catch (e) {} }
@@ -3577,6 +4034,14 @@ document.getElementById("mnav-menu").addEventListener("click", function(){
     b.addEventListener("click", function(){ ask(c[1], false); });
     chipsBox.appendChild(b);
   });
+  var photoChip = document.createElement("button");
+  photoChip.type = "button"; photoChip.className = "ai-chip";
+  photoChip.textContent = "Arabic page photo → Urdu translation";
+  photoChip.addEventListener("click", function(){
+    if (!aiSignedIn()) { paintAiGate(); if (!opened) setOpen(true); return; }
+    if (fileInput) fileInput.click();
+  });
+  chipsBox.appendChild(photoChip);
 
   function waHref(msg){
     try { return waLink(msg); } catch (e) { return "https://wa.me/923074348899?text=" + encodeURIComponent(msg); }
@@ -3585,8 +4050,15 @@ document.getElementById("mnav-menu").addEventListener("click", function(){
   function addUserMsg(text){
     var row = document.createElement("div"); row.className = "ai-row user";
     var bub = document.createElement("div"); bub.className = "ai-bubble";
-    var p = document.createElement("p"); p.textContent = text;
+    var p = document.createElement("p"); p.textContent = text; p.dir = "auto";
     bub.appendChild(p); row.appendChild(bub); msgs.appendChild(row); scrollDown();
+  }
+  function addUserImage(dataUrl){
+    var row = document.createElement("div"); row.className = "ai-row user";
+    var bub = document.createElement("div"); bub.className = "ai-bubble";
+    var im = document.createElement("img"); im.className = "ai-userimg"; im.src = dataUrl; im.alt = "Photo of an Arabic page you sent";
+    var p = document.createElement("p"); p.textContent = "Arabic page photo — I'rab + Urdu translation, please";
+    bub.appendChild(im); bub.appendChild(p); row.appendChild(bub); msgs.appendChild(row); scrollDown();
   }
   function addTyping(){
     var row = document.createElement("div"); row.className = "ai-row"; row.id = "ai-typing-row";
@@ -3603,7 +4075,7 @@ document.getElementById("mnav-menu").addEventListener("click", function(){
     if (a.title) parts.push(a.title);
     (a.paras || []).forEach(function(p){ parts.push(p); });
     (a.arabic || []).forEach(function(l){ if (l.en) parts.push(l.en); });
-    if (a.hawala) parts.push("Hawala: " + a.hawala);
+    if (a.hawala) parts.push((a.lang === "ur" ? "حوالہ: " : a.lang === "ar" ? "المرجع: " : "Hawala: ") + a.hawala);
     if (a.source) parts.push("Source: " + a.source);
     return parts.join("\n");
   }
@@ -3611,13 +4083,13 @@ document.getElementById("mnav-menu").addEventListener("click", function(){
     var row = document.createElement("div"); row.className = "ai-row";
     var img = document.createElement("img"); img.className = "ai-mini"; img.src = AVATAR; img.alt = "";
     var bub = document.createElement("div"); bub.className = "ai-bubble";
-    if (a.title) { var t = document.createElement("p"); t.className = "ai-title"; t.textContent = a.title; bub.appendChild(t); }
-    (a.paras || []).forEach(function(p){ var el = document.createElement("p"); el.textContent = p; bub.appendChild(el); });
+    if (a.title) { var t = document.createElement("p"); t.className = "ai-title"; t.textContent = a.title; t.dir = "auto"; bub.appendChild(t); }
+    (a.paras || []).forEach(function(p){ var el = document.createElement("p"); el.textContent = p; el.dir = "auto"; bub.appendChild(el); });
     (a.arabic || []).forEach(function(l){
       if (l.ar) { var ar = document.createElement("div"); ar.className = "ai-ar"; ar.setAttribute("lang", "ar"); ar.setAttribute("dir", "rtl"); ar.textContent = l.ar; bub.appendChild(ar); }
       if (l.en) { var en = document.createElement("p"); en.className = "ai-ar-en"; en.textContent = l.en; bub.appendChild(en); }
     });
-    if (a.hawala) { var h = document.createElement("div"); h.className = "ai-hawala"; var hs = document.createElement("strong"); hs.textContent = "Hawala (Book Reference): "; h.appendChild(hs); h.appendChild(document.createTextNode(a.hawala)); bub.appendChild(h); }
+    if (a.hawala) { var h = document.createElement("div"); h.className = "ai-hawala"; var hs = document.createElement("strong"); hs.textContent = a.lang === "ur" ? "حوالہ (کتابی حوالہ): " : a.lang === "ar" ? "المرجع: " : a.lang === "roman" ? "Hawala (Kitab ka Hawala): " : "Hawala (Book Reference): "; h.appendChild(hs); h.appendChild(document.createTextNode(a.hawala)); bub.appendChild(h); }
     if (a.source) { var s = document.createElement("div"); s.className = "ai-hawala"; var ss = document.createElement("strong"); ss.textContent = "Source: "; s.appendChild(ss); s.appendChild(document.createTextNode(a.source)); bub.appendChild(s); }
     var actions = document.createElement("div"); actions.className = "ai-actions";
     var hasAction = false;
@@ -3626,7 +4098,7 @@ document.getElementById("mnav-menu").addEventListener("click", function(){
     var sp = document.createElement("button"); sp.type = "button"; sp.className = "ai-speak"; sp.setAttribute("aria-label", "Listen to this answer");
     sp.innerHTML = '<svg viewBox="0 0 24 24"><path d="M4 9v6h4l5 4V5L8 9H4Z"/><path d="M16.5 8.5a5 5 0 0 1 0 7"/></svg>';
     var txt = answerText(a);
-    sp.addEventListener("click", function(){ speak(txt, true); });
+    sp.addEventListener("click", function(){ speak(txt, true, a.lang || "en"); });
     actions.appendChild(sp); hasAction = true;
     if (hasAction) bub.appendChild(actions);
     row.appendChild(img); row.appendChild(bub); msgs.appendChild(row); scrollDown();
@@ -3637,10 +4109,24 @@ document.getElementById("mnav-menu").addEventListener("click", function(){
   var VOICES = [];
   function loadVoices(){ try { VOICES = window.speechSynthesis.getVoices() || []; } catch (e) {} }
   if ("speechSynthesis" in window) { loadVoices(); try { window.speechSynthesis.onvoiceschanged = loadVoices; } catch (e) {} }
-  function speak(text, force){
+  function pickVoice(prefixes){
+    for (var p = 0; p < prefixes.length; p++) {
+      for (var i = 0; i < VOICES.length; i++) {
+        if (VOICES[i].lang && VOICES[i].lang.toLowerCase().indexOf(prefixes[p]) === 0) return VOICES[i];
+      }
+    }
+    return null;
+  }
+  /* Spoken replies use the SAME language as the question: the voice and
+     BCP language come from the detected reply language (Urdu → ur-PK,
+     Roman Urdu → ur-PK, Arabic → ar-SA, English → en-US). Arabic-script
+     lines inside any reply prefer an Arabic-script voice (Urdu first
+     for Urdu replies, Arabic first otherwise). */
+  function speak(text, force, lang){
     if (!aiSignedIn()) return;
     if (!("speechSynthesis" in window)) return;
     if (!soundOn && !force) return;
+    var meta = LANGS[lang] || LANGS.en;
     try {
       window.speechSynthesis.cancel();
       String(text).split(/\n+/).forEach(function(seg){
@@ -3648,12 +4134,13 @@ document.getElementById("mnav-menu").addEventListener("click", function(){
         var arCount = (seg.match(/[\u0600-\u06FF]/g) || []).length;
         var u = new SpeechSynthesisUtterance(seg);
         if (arCount > seg.length * 0.35) {
-          var av = null;
-          for (var i = 0; i < VOICES.length; i++) { if (VOICES[i].lang && VOICES[i].lang.indexOf("ar") === 0) { av = VOICES[i]; break; } }
-          if (!av) return; /* no Arabic voice: skip the Arabic line rather than mispronounce it */
-          u.voice = av; u.lang = av.lang;
+          var av = (lang === "ur") ? pickVoice(["ur", "ar"]) : pickVoice(["ar", "ur"]);
+          if (av) { u.voice = av; u.lang = av.lang; }
+          else if (lang === "ar" || lang === "ur") { u.lang = meta.bcp; }
+          else return; /* English reply and no Arabic-script voice: skip the Arabic line rather than mispronounce it */
         } else {
-          u.lang = document.documentElement.lang === "ur" ? "ur-PK" : "en-US";
+          var lv = pickVoice(meta.vp);
+          if (lv) { u.voice = lv; u.lang = lv.lang; } else u.lang = meta.bcp;
         }
         u.rate = 0.98;
         window.speechSynthesis.speak(u);
@@ -3674,7 +4161,7 @@ document.getElementById("mnav-menu").addEventListener("click", function(){
     if (listening) { try { recog.stop(); } catch (e) {} setListening(false); return; }
     try {
       recog = new SR();
-      recog.lang = document.documentElement.lang === "ur" ? "ur-PK" : "en-US";
+      recog.lang = (lastLang && LANGS[lastLang]) ? LANGS[lastLang].bcp : (document.documentElement.lang === "ur" ? "ur-PK" : "en-US");
       recog.interimResults = true; recog.maxAlternatives = 1;
       var finalText = "";
       recog.onresult = function(ev){
@@ -3702,27 +4189,142 @@ document.getElementById("mnav-menu").addEventListener("click", function(){
     if (!q) return;
     if (!aiSignedIn()) { paintAiGate(); if (!opened) setOpen(true); return; }
     if (!opened) setOpen(true);
-    addUserMsg(q);
-    input.value = "";
-    var typing = addTyping();
-    var local = findAnswer(q);
-    if (local) {
+    var lang = detectLang(q).code;
+    lastLang = lang;
+    if (/سلام/.test(q) && q.split(/\s+/).filter(Boolean).length <= 6 && /[\u0600-\u06FF]/.test(q)) {
+      addUserMsg(q); input.value = ""; addTyping();
       setTimeout(function(){
         removeTyping();
-        addAssistant(local);
-        if (viaVoice) speak(answerText(local), false);
-      }, 420);
+        var gAns = localizeAnswer(GREETING, lang);
+        addAssistant(gAns);
+        if (viaVoice) speak(answerText(gAns), false, lang);
+      }, 300);
+      return;
+    }
+    if (isArabicPassage(q)) { askArabicText(q, lang, viaVoice); return; }
+    addUserMsg(q);
+    input.value = "";
+    addTyping();
+    var local = findAnswer(q);
+    if (local) {
+      loadAiKey();
+      var hasKey = !!String(window.__aiGeminiKey || "").trim();
+      if (lang !== "en" && hasKey) {
+        /* Full AI present this session: render the whole verified
+           answer in the question's language via Gemini translation. */
+        var rawAns = JSON.parse(JSON.stringify(local));
+        rawAns.lang = lang;
+        if (lang === "ur" && rawAns.hawala) rawAns.hawala = urSmart(rawAns.hawala);
+        geminiTranslate(rawAns, lang).then(function(tAns){
+          removeTyping();
+          var ans = tAns || localizeAnswer(local, lang);
+          addAssistant(ans);
+          if (viaVoice) speak(answerText(ans), false, lang);
+        });
+      } else {
+        setTimeout(function(){
+          removeTyping();
+          var ans = localizeAnswer(local, lang);
+          addAssistant(ans);
+          if (viaVoice) speak(answerText(ans), false, lang);
+        }, 420);
+      }
       return;
     }
     loadAiKey();
-    askGemini(q).then(function(text){
+    askGemini(q, LANGS[lang].name).then(function(text){
       removeTyping();
-      var ans = text ? geminiAnswer(text) : fallbackAnswer(q);
+      var ans = text ? geminiAnswer(text) : fallbackAnswerL(q, lang);
+      ans.lang = lang;
       addAssistant(ans);
-      if (viaVoice) speak(answerText(ans), false);
+      if (viaVoice) speak(answerText(ans), false, lang);
     });
   }
   form.addEventListener("submit", function(e){ e.preventDefault(); ask(input.value, false); });
+
+  /* ---------------- Arabic text & photo flows (I'rab + Urdu) ---------------- */
+  function askArabicText(text, lang, viaVoice){
+    addUserMsg(text);
+    input.value = "";
+    addTyping();
+    loadAiKey();
+    if (String(window.__aiGeminiKey || "").trim()) {
+      askGeminiArabic("text", text, null).then(function(ans){
+        if (ans) {
+          removeTyping(); addAssistant(ans);
+          if (viaVoice) speak(answerText(ans), false, "ur");
+          return;
+        }
+        matchVerifiedArabic(text).then(function(m){
+          removeTyping();
+          addAssistant(m ? verifiedArabicAnswer(m, "typed", null, lang, true) : noMatchArabicAnswer("typed", lang, null, true));
+        });
+      });
+      return;
+    }
+    matchVerifiedArabic(text).then(function(m){
+      removeTyping();
+      addAssistant(m ? verifiedArabicAnswer(m, "typed", null, lang, false) : noMatchArabicAnswer("typed", lang, null, false));
+    });
+  }
+  if (attachBtn) attachBtn.addEventListener("click", function(){
+    if (!aiSignedIn()) { paintAiGate(); if (!opened) setOpen(true); return; }
+    if (fileInput) fileInput.click();
+  });
+  if (fileInput) fileInput.addEventListener("change", function(){
+    var f = fileInput.files && fileInput.files[0];
+    fileInput.value = "";
+    if (!f) return;
+    if (!aiSignedIn()) { paintAiGate(); return; }
+    if (!opened) setOpen(true);
+    processImageFile(f);
+  });
+  function processImageFile(f){
+    if (!/^image\//.test(f.type || "")) { addNote("Please choose an image file — a photo of the Arabic page."); return; }
+    var rd = new FileReader();
+    rd.onload = function(){
+      var img = new Image();
+      img.onload = function(){
+        var max = 1280, w = img.naturalWidth || img.width, h = img.naturalHeight || img.height;
+        var sc = Math.min(1, max / Math.max(w, h));
+        var cv = document.createElement("canvas");
+        cv.width = Math.max(1, Math.round(w * sc)); cv.height = Math.max(1, Math.round(h * sc));
+        cv.getContext("2d").drawImage(img, 0, 0, cv.width, cv.height);
+        var dataUrl = cv.toDataURL("image/jpeg", 0.85);
+        addUserImage(dataUrl);
+        addTyping();
+        loadAiKey();
+        if (String(window.__aiGeminiKey || "").trim()) {
+          setAiStatus("Reading your photo with the full AI (Gemini)…");
+          askGeminiArabic("image", null, dataUrl.split(",")[1]).then(function(ans){
+            if (ans) { setAiStatus(null); removeTyping(); addAssistant(ans); return; }
+            ocrImageFlow(dataUrl, true);
+          });
+        } else {
+          ocrImageFlow(dataUrl, false);
+        }
+      };
+      img.onerror = function(){ addNote("That image could not be opened. Please try another photo of the page."); };
+      img.src = rd.result;
+    };
+    rd.onerror = function(){ addNote("That file could not be read. Please try another photo of the page."); };
+    rd.readAsDataURL(f);
+  }
+  function ocrImageFlow(dataUrl, geminiFailed){
+    setAiStatus("Reading your photo with free OCR (Tesseract, Arabic)… this can take a moment.");
+    runOcr(dataUrl).then(function(text){
+      setAiStatus(null); removeTyping();
+      var clean = String(text || "").replace(/\s+/g, " ").trim();
+      var arCount = (clean.match(/[\u0600-\u06FF]/g) || []).length;
+      if (arCount < 8) { addAssistant(ocrUnreadableAnswer(geminiFailed)); return; }
+      matchVerifiedArabic(clean).then(function(m){
+        addAssistant(m ? verifiedArabicAnswer(m, "image", clean, "ur", geminiFailed) : noMatchArabicAnswer("image", "ur", clean, geminiFailed));
+      });
+    }).catch(function(){
+      setAiStatus(null); removeTyping();
+      addAssistant(ocrUnreadableAnswer(geminiFailed));
+    });
+  }
 
   /* ---------------- Open / close ---------------- */
   function setOpen(on){
