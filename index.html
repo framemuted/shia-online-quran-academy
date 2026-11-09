@@ -1709,68 +1709,83 @@ let MYDOC = null;   // users/{uid} profile {name, email, role, ...}
 const ROLES = ["pending","student","parent","teacher","admin"];
 const ROLE_LABEL = { admin:"Admin", teacher:"Teacher", parent:"Parent", student:"Student", pending:"Awaiting activation" };
 
-/* ---------- AI Assistant Gemini key — persistent, ADMIN ONLY ----------
+/* ---------- AI Assistant Gemini key — persistent, SIGNED-IN USERS ----------
    The persistent Gemini API key lives in ONE private Firestore document:
-   collection "adminConfig", document "gemini", field "apiKey". That
-   document is admin-only: this code requests it ONLY when the signed-in
-   user's role is "admin", so the key is never fetched for — or delivered
-   to — students, parents, teachers or signed-out visitors. The key is
-   never written by this page, never copied into the publicly readable
-   "settings" collection (which serves the public Fees section) or any
-   other shared store, and no key value is hardcoded here; the admin
+   collection "adminConfig", document "gemini", field "apiKey". This code
+   requests it for ANY signed-in user — student, parent, teacher, admin
+   or any other registered account — so every signed-in user gets the
+   full Gemini-powered AI Assistant (broader answers, reading photos of
+   Arabic pages, I'rab, full same-language replies). It is never fetched
+   for signed-out visitors. The key is never written by this page, never
+   copied into the publicly readable "settings" collection (which serves
+   the public Fees section) or any other shared/public store, never
+   shown on the page, and no key value is hardcoded here; the admin
    places the key into adminConfig/gemini separately (Firebase console).
    Firestore security rules must likewise allow reads of adminConfig to
-   admin accounts only.
+   signed-in accounts (and never to signed-out visitors).
    A key typed into Admin Dashboard → Academy settings is a session
-   OVERRIDE: it wins over the persistent key for the admin's current
+   OVERRIDE / fallback: it wins over the persistent key for the current
    session only and is kept in browser memory — never saved anywhere.
    window.__aiGeminiKey always holds the effective key for THIS session
-   ("" for anyone who is not the signed-in admin). */
+   ("" while signed out); it is wiped from the session on sign-out. */
 window.__aiGeminiKey = window.__aiGeminiKey || "";
-window.__aiGeminiKeyFirestore = "";   // key loaded from adminConfig/gemini (admin session only)
+window.__aiGeminiKeyFirestore = "";   // key loaded from adminConfig/gemini (signed-in session only)
 window.__aiGeminiKeyManual = "";      // settings-field override (this session only)
-window.__aiAdminKeyUid = "";          // uid the persistent key was loaded for
+window.__aiUserKeyUid = "";           // uid the persistent key was loaded for
+window.__aiUserKeyInflight = null;
+/* Backwards-compatible aliases for the former admin-only names. */
+window.__aiAdminKeyUid = "";
 window.__aiAdminKeyInflight = null;
 window.__aiIsAdmin = function(){ return !!(ME && MYDOC && MYDOC.role === "admin"); };
+window.__aiIsSignedIn = function(){ return !!ME; };
 window.__aiResolveGeminiKey = function(){
   const manual = String(window.__aiGeminiKeyManual || "").trim();
   window.__aiGeminiKey = manual || String(window.__aiGeminiKeyFirestore || "").trim();
   return window.__aiGeminiKey;
 };
-window.__loadAdminGeminiKey = async function(force){
-  if (!window.__aiIsAdmin() || !fbReady || !fbDb || !ME) {
-    /* Not the admin (or signed out): no key may remain usable in this
-       session — clear both sources so nothing leaks to another user. */
+window.__loadGeminiKey = async function(force){
+  if (!ME || !fbReady || !fbDb) {
+    /* Signed out: no key may remain usable in this session — clear both
+       sources so nothing leaks to the next person on this browser. */
     window.__aiGeminiKeyFirestore = "";
     window.__aiGeminiKeyManual = "";
+    window.__aiUserKeyUid = "";
     window.__aiAdminKeyUid = "";
     window.__aiResolveGeminiKey();
     return "";
   }
   const uid = ME.uid;
-  if (!force && window.__aiAdminKeyUid === uid && String(window.__aiGeminiKeyFirestore || "").trim()) {
+  if (!force && (window.__aiUserKeyUid === uid || window.__aiAdminKeyUid === uid) && String(window.__aiGeminiKeyFirestore || "").trim()) {
     window.__aiResolveGeminiKey();
     return window.__aiGeminiKey;
   }
+  if (!force && window.__aiUserKeyInflight) return window.__aiUserKeyInflight;
   if (!force && window.__aiAdminKeyInflight) return window.__aiAdminKeyInflight;
   const run = (async () => {
     try {
       const d = await fbDb.collection("adminConfig").doc("gemini").get();
       const v = (d && d.exists && d.data()) ? d.data().apiKey : "";
       window.__aiGeminiKeyFirestore = (typeof v === "string") ? v.trim() : "";
-      if (window.__aiGeminiKeyFirestore) window.__aiAdminKeyUid = uid;
+      if (window.__aiGeminiKeyFirestore) { window.__aiUserKeyUid = uid; window.__aiAdminKeyUid = uid; }
     } catch (e) {
-      /* Denied or unreachable: Gemini simply stays off — never fall back
-         to any shared/public store for a key. */
+      /* Denied or unreachable: Gemini simply stays off (any session-only
+         manual override still applies) — never fall back to any
+         shared/public store for a key. */
       window.__aiGeminiKeyFirestore = "";
     }
     window.__aiResolveGeminiKey();
     return window.__aiGeminiKey;
   })();
+  window.__aiUserKeyInflight = run;
   window.__aiAdminKeyInflight = run;
   try { return await run; }
-  finally { if (window.__aiAdminKeyInflight === run) window.__aiAdminKeyInflight = null; }
+  finally {
+    if (window.__aiUserKeyInflight === run) window.__aiUserKeyInflight = null;
+    if (window.__aiAdminKeyInflight === run) window.__aiAdminKeyInflight = null;
+  }
 };
+/* Former name kept as an alias so every existing caller keeps working. */
+window.__loadAdminGeminiKey = window.__loadGeminiKey;
 
 function escH(s){ return String(s == null ? "" : s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
 function statusPill(s){ const m={"Present":"present","Absent":"absent","Late":"late","Excused":"excused","Class Rescheduled":"resched","Completed":"done","In Progress":"prog","Not Started":"todo","Pending":"prog","Approved":"done","Rejected":"absent","Scheduled":"prog"}; return '<span class="pill '+(m[s]||"todo")+'">'+escH(s)+'</span>'; }
@@ -1902,11 +1917,14 @@ if (fbReady && fbAuth) {
   fbAuth.onAuthStateChanged(async user => {
     ME = user; MYDOC = null;
     if (!user) {
-      /* Signed out: wipe every trace of the admin Gemini key from this
+      /* Signed out: wipe every trace of the Gemini key from this
          session so it can never be used by the next person here. */
       window.__aiGeminiKeyFirestore = "";
       window.__aiGeminiKeyManual = "";
+      window.__aiUserKeyUid = "";
       window.__aiAdminKeyUid = "";
+      window.__aiUserKeyInflight = null;
+      window.__aiAdminKeyInflight = null;
       if (window.__aiResolveGeminiKey) window.__aiResolveGeminiKey();
     }
     paintPortal();
@@ -1930,12 +1948,13 @@ if (fbReady && fbAuth) {
       } catch (e) { MYDOC = { name: user.displayName || "", email: user.email || "", role: "pending" }; }
       paintPortal();
       paintLibraryGate();
-      /* Admin only: load the persistent Gemini key from the private
-         adminConfig/gemini document, then refresh the AI gate so the
-         assistant picks it up. For every other role this loader clears
-         the key instead of fetching anything. */
-      if (window.__loadAdminGeminiKey) {
-        try { await window.__loadAdminGeminiKey(true); } catch (e) {}
+      /* Any signed-in user: load the persistent Gemini key from the
+         private adminConfig/gemini document, then refresh the AI gate
+         so the assistant picks it up — every signed-in user (student,
+         parent, teacher, admin or any registered account) gets the
+         full Gemini-powered AI. Signed-out visitors never fetch it. */
+      if (window.__loadGeminiKey || window.__loadAdminGeminiKey) {
+        try { await (window.__loadGeminiKey || window.__loadAdminGeminiKey)(true); } catch (e) {}
         if (window.__aiAuthChanged) window.__aiAuthChanged();
       }
       const hh = location.hash || "";
@@ -2253,9 +2272,9 @@ async function renderAdmin(){
   const progMap = {}; progress.forEach(p => { if (p.studentId) progMap[p.studentId] = p; });
   let feesDoc = null;
   try { feesDoc = await getDoc("settings", "fees"); } catch (e) {}
-  /* Refresh the persistent admin-only Gemini key status for the settings
-     card below (reads adminConfig/gemini — admin session only). */
-  try { await window.__loadAdminGeminiKey(true); } catch (e) {}
+  /* Refresh the persistent Gemini key status for the settings card
+     below (reads adminConfig/gemini — available to any signed-in user). */
+  try { await (window.__loadGeminiKey || window.__loadAdminGeminiKey)(true); } catch (e) {}
   const gemPersistent = !!String(window.__aiGeminiKeyFirestore || "").trim();
 
   const comps = progress.map(p=>p.courseCompletion).filter(v=>v != null && !isNaN(v));
@@ -2353,7 +2372,7 @@ async function renderAdmin(){
 
   /* Library manager + settings (academy tools) */
   + '<div class="grid g2" style="align-items:start"><form class="card" id="form-lib"><h3>Library manager</h3><p style="font-size:.9rem">Publish learning materials to the Digital Library.</p><div class="field"><label for="lb-t">Resource title *</label><input id="lb-t" required /></div><div class="field"><label for="lb-c">Category</label><select id="lb-c">'+LIB_CATS.slice(1).map(c=>'<option>'+escH(c)+'</option>').join("")+'</select></div><div class="field"><label for="lb-d">Description</label><input id="lb-d" placeholder="Short description" /></div><button class="btn btn-emerald btn-sm" type="submit">Publish to Library</button></form>'
-  + '<form class="card" id="form-settings"><h3>Academy settings</h3><div class="field"><label for="set-wa">WhatsApp / phone number (international format)</label><input id="set-wa" value="'+escH(settings.waNumber)+'" inputmode="numeric" /><small style="color:var(--muted)">Saving updates every WhatsApp button on this website for this visit.</small></div><div class="field"><label for="set-gemini">AI Assistant — free Google Gemini API key (optional)</label><input id="set-gemini" type="password" autocomplete="off" placeholder="Paste a free Gemini API key from Google AI Studio" value="'+escH(window.__aiGeminiKeyManual || "")+'" /><small style="color:var(--muted)">Optional. Get a free key from Google AI Studio (aistudio.google.com → Get API key) and paste it here, then Save. Persistent admin key: '+(gemPersistent ? "ACTIVE — a key is saved in the private Firestore document adminConfig/gemini (field apiKey), which only a signed-in admin can read, and the AI Assistant uses it automatically in your admin sessions (broader answers, reading photos of Arabic pages, I'rab). It is never copied into any public collection and never sent to other users." : "none found yet — once a key is placed in the private Firestore document adminConfig/gemini (Firebase console → Firestore Database → adminConfig → gemini → field apiKey), the AI Assistant will use it automatically in your admin sessions; only a signed-in admin can read that document, and it is never copied into any public collection.")+' A key typed in this field overrides the persistent key for this visit only: it is kept only in this browser, never saved to the website or to Firestore, and never shown to visitors. While it is active here, the AI Assistant can also answer general questions beyond the verified Knowledge Center; fiqh answers always come from the verified content first, and personal rulings are always referred to Qari Sahib. Set a usage cap on the key in Google AI Studio. Clear the field and save to remove it.</small></div><div class="field"><label>Role-based access</label><p style="font-size:.92rem;color:var(--muted);margin:0">Students see only their own classes and records · Parents see only their own children · Teachers see their assigned students · Admin sees the whole academy.</p></div><button class="btn btn-gold btn-sm" type="submit">Save Settings</button></form></div>';
+  + '<form class="card" id="form-settings"><h3>Academy settings</h3><div class="field"><label for="set-wa">WhatsApp / phone number (international format)</label><input id="set-wa" value="'+escH(settings.waNumber)+'" inputmode="numeric" /><small style="color:var(--muted)">Saving updates every WhatsApp button on this website for this visit.</small></div><div class="field"><label for="set-gemini">AI Assistant — free Google Gemini API key (optional)</label><input id="set-gemini" type="password" autocomplete="off" placeholder="Paste a free Gemini API key from Google AI Studio" value="'+escH(window.__aiGeminiKeyManual || "")+'" /><small style="color:var(--muted)">Optional. Get a free key from Google AI Studio (aistudio.google.com → Get API key) and paste it here, then Save. Persistent key: '+(gemPersistent ? "ACTIVE — a key is saved in the private Firestore document adminConfig/gemini (field apiKey), and the AI Assistant uses it automatically for every signed-in user — student, parent, teacher, admin or any registered account (broader answers, reading photos of Arabic pages, I'rab, full same-language replies). It is never copied into any public collection, and the key value is never shown on the page." : "none found yet — once a key is placed in the private Firestore document adminConfig/gemini (Firebase console → Firestore Database → adminConfig → gemini → field apiKey), the AI Assistant will use it automatically for every signed-in user; signed-out visitors cannot read that document, and it is never copied into any public collection or shown on the page.")+' A key typed in this field is a session-only override / fallback: it overrides the persistent key for this visit only, is kept only in this browser, never saved to the website or to Firestore, and never shown to visitors. While it is active here, the AI Assistant can also answer general questions beyond the verified Knowledge Center; fiqh answers always come from the verified content first, and personal rulings are always referred to Qari Sahib. Set a usage cap on the key in Google AI Studio. Clear the field and save to remove it.</small></div><div class="field"><label>Role-based access</label><p style="font-size:.92rem;color:var(--muted);margin:0">Students see only their own classes and records · Parents see only their own children · Teachers see their assigned students · Admin sees the whole academy.</p></div><button class="btn btn-gold btn-sm" type="submit">Save Settings</button></form></div>';
 
   /* --- wire admin actions --- */
   const rerender = ()=>paintPortal();
@@ -2494,15 +2513,15 @@ async function renderAdmin(){
     settings.waNumber = v; refreshWaLinks();
     const gkEl = document.getElementById("set-gemini");
     const gk = gkEl ? gkEl.value.trim() : "";
-    /* Session override only: kept in this browser's memory and never
-       written to Firestore or anywhere else. An empty field means no
-       override, so the persistent admin-only key from adminConfig/gemini
-       (when present) applies instead. */
+    /* Session override / fallback only: kept in this browser's memory
+       and never written to Firestore or anywhere else. An empty field
+       means no override, so the persistent key from adminConfig/gemini
+       (when present, available to any signed-in user) applies instead. */
     window.__aiGeminiKeyManual = gk;
     if (window.__aiResolveGeminiKey) window.__aiResolveGeminiKey();
     const pers = !!String(window.__aiGeminiKeyFirestore || "").trim();
     toast(gk ? "Settings saved — WhatsApp number updated. Your typed AI key overrides the persistent key in this browser for this visit only."
-      : pers ? "Settings saved — WhatsApp number updated. The persistent admin-only Gemini key (adminConfig/gemini) is active for your signed-in admin sessions."
+      : pers ? "Settings saved — WhatsApp number updated. The persistent Gemini key (adminConfig/gemini) is active for every signed-in user." 
       : "Settings saved — WhatsApp number updated. The AI Assistant answers from the verified content only.");
   });
   if (students.length) wireProgressEditor("adm", students, progMap);
@@ -3099,20 +3118,21 @@ document.getElementById("mnav-menu").addEventListener("click", function(){
    - It NEVER invents a fiqh ruling, Hadith, Quranic reference, book
      name or page number. Anything not covered is answered honestly and
      the visitor is directed to Qari Muhammad Imran Ali on WhatsApp.
-   - GEMINI KEY (admin only): the persistent key is read from the
-     private Firestore document adminConfig/gemini (field apiKey) —
-     requested ONLY when the signed-in user's role is admin, so it is
-     never fetched by or delivered to students, parents, teachers or
-     visitors, and never copied into any publicly readable collection.
-     With that key active in an admin session, Gemini (with strict
-     no-invented-rulings instructions) answers general questions beyond
-     the verified content, reads photos of Arabic pages, adds I'rab and
-     renders full same-language replies. A key typed into Admin
-     Dashboard → Academy settings overrides the persistent key for the
-     admin's current session only (browser memory, never saved). The
-     key value is placed into adminConfig/gemini separately — no key is
-     hardcoded here. Signed-in non-admin users keep receiving verified
-     Knowledge Center answers only.
+   - GEMINI KEY (any signed-in user): the persistent key is read from
+     the private Firestore document adminConfig/gemini (field apiKey) —
+     requested for ANY signed-in user (student, parent, teacher, admin
+     or any registered account), so every signed-in user gets the full
+     Gemini-powered AI; it is never fetched for signed-out visitors and
+     never copied into any publicly readable collection, and the key
+     value is never shown on the page. With that key active in a
+     signed-in session, Gemini (with strict no-invented-rulings
+     instructions) answers general questions beyond the verified
+     content, reads photos of Arabic pages, adds I'rab and renders full
+     same-language replies. A key typed into Admin Dashboard → Academy
+     settings is a session-only override / fallback (browser memory,
+     never saved). The key value is placed into adminConfig/gemini
+     separately — no key is hardcoded here. The key is wiped from the
+     session on sign-out.
    - Voice: browser Web Speech API (free) — speech recognition for
      questions, speech synthesis for spoken replies.
    - SAME-LANGUAGE REPLIES: the language of every question is detected
@@ -3121,16 +3141,16 @@ document.getElementById("mnav-menu").addEventListener("click", function(){
      website's own verified Urdu translations (the same UR_DICT the
      EN/اردو toggle uses, applied at sentence level, Hawala included).
      Roman Urdu replies are that same verified Urdu rendering
-     transliterated mechanically into Roman script. When the admin's
-     Gemini key is present in the session, the full verified answer
+     transliterated mechanically into Roman script. When the
+     Gemini key is present in the signed-in session, the full verified answer
      body is rendered into the question's language by Gemini
      translation (segment-checked). Nothing is ever translated by
      guessing: any part with no verified translation and no Gemini key
      stays in its verified English with a note in the user's language
      saying so — exactly the policy of the site's Urdu toggle.
    - IMAGE INPUT: a signed-in user can send a photo of an Arabic page
-     (e.g. a Madaris book). With the admin's Gemini key present in the
-     session, Gemini (multimodal) reads the page; otherwise a free
+     (e.g. a Madaris book). With the Gemini key present in the
+     signed-in session, Gemini (multimodal) reads the page; otherwise a free
      on-device OCR (Tesseract.js, Arabic) reads it and the text is
      matched against this website's verified Arabic library. The reply
      always states honestly which method was used; OCR can misread.
@@ -3778,22 +3798,24 @@ document.getElementById("mnav-menu").addEventListener("click", function(){
     return ans;
   }
 
-  /* ---------------- Gemini (admin-only key) ----------------
+  /* ---------------- Gemini (signed-in users' key) ----------------
      Effective key = window.__aiGeminiKey, resolved by the portal code:
-     the Admin settings field override (this session only) wins; otherwise
-     the persistent key from the private Firestore document
-     adminConfig/gemini (field apiKey), which the portal code requests
-     ONLY for a signed-in admin — for everyone else it resolves to "" and
-     any previously loaded key is wiped. loadAiKey() returns a promise
-     because the persistent key may still be loading from Firestore;
-     every Gemini path below awaits it before reading the key. */
+     the Admin settings field override / fallback (this session only)
+     wins; otherwise the persistent key from the private Firestore
+     document adminConfig/gemini (field apiKey), which the portal code
+     requests for ANY signed-in user — student, parent, teacher, admin
+     or any registered account. For signed-out visitors it resolves to
+     "" and any previously loaded key is wiped on sign-out. loadAiKey()
+     returns a promise because the persistent key may still be loading
+     from Firestore; every Gemini path below awaits it before reading
+     the key. */
   var aiKeyInflight = null;
   function loadAiKey(){
     if (typeof window.__aiGeminiKey !== "string") window.__aiGeminiKey = window.__aiGeminiKey || "";
-    if (typeof window.__loadAdminGeminiKey !== "function") return Promise.resolve(window.__aiGeminiKey || "");
+    if (typeof window.__loadGeminiKey !== "function" && typeof window.__loadAdminGeminiKey !== "function") return Promise.resolve(window.__aiGeminiKey || "");
     if (!aiKeyInflight) {
       aiKeyInflight = Promise.resolve()
-        .then(function(){ return window.__loadAdminGeminiKey(); })
+        .then(function(){ return (window.__loadGeminiKey || window.__loadAdminGeminiKey)(); })
         .catch(function(){ return ""; })
         .then(function(k){
           aiKeyInflight = null;
