@@ -1546,7 +1546,7 @@ body.ur-mode .mnav a,body.ur-mode .mnav button{line-height:1.7}
   </div>
   <div class="ai-chips" id="ai-chips"></div>
   <div class="ai-msgs" id="ai-msgs" aria-live="polite"></div>
-  <div class="ai-status" id="ai-status" hidden>Listening… speak now</div>
+  <div class="ai-status" id="ai-status" hidden>Listening… auto-detecting your language — speak now</div>
   <form class="ai-inputbar" id="ai-form">
     <div class="ai-type-row">
       <input id="ai-input" type="text" placeholder="Ask about Shia fiqh, duas, namaz…" autocomplete="off" aria-label="Type your question" disabled />
@@ -1555,10 +1555,10 @@ body.ur-mode .mnav a,body.ur-mode .mnav button{line-height:1.7}
     <div class="ai-btn-row">
       <button type="button" class="ai-attach" id="ai-attach" aria-label="Photo — send a photo of an Arabic page for its Urdu translation" title="Photo — Arabic page photo" disabled><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h3l2-2.5h6L17 8h3a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1Z"/><circle cx="12" cy="14" r="3.4"/></svg><span class="ai-btn-txt"><strong>Photo</strong><small>Arabic page photo</small></span></button>
       <input type="file" id="ai-file" accept="image/*" hidden />
-      <button type="button" class="ai-mic" id="ai-mic" aria-label="Voice — tap and speak your question" title="Voice — tap &amp; speak" disabled><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a3 3 0 0 1 3 3v5a3 3 0 0 1-6 0V6a3 3 0 0 1 3-3Z"/><path d="M5 11a7 7 0 0 0 14 0"/><path d="M12 18v3"/></svg><span class="ai-btn-txt"><strong>Voice</strong><small>Tap &amp; speak</small></span></button>
+      <button type="button" class="ai-mic" id="ai-mic" aria-label="Voice — tap and speak your question" title="Voice — tap &amp; speak" disabled><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a3 3 0 0 1 3 3v5a3 3 0 0 1-6 0V6a3 3 0 0 1 3-3Z"/><path d="M5 11a7 7 0 0 0 14 0"/><path d="M12 18v3"/></svg><span class="ai-btn-txt"><strong>Voice</strong><small>Any language</small></span></button>
     </div>
   </form>
-  <p class="ai-note">Answers come only from this website's verified Knowledge Center, with the book reference (Hawala) shown. Ask in English, اردو, Roman Urdu or Arabic — the reply (text and voice) comes in the same language. You can also send a photo of an Arabic book page for its Urdu translation. For a personal ruling, ask Qari Muhammad Imran Ali on <a href="#" data-wa="Assalam-o-Alaikum Qari Muhammad Imran Ali! I have a question about Shia fiqh.">WhatsApp</a>.</p>
+  <p class="ai-note">Answers come only from this website's verified Knowledge Center, with the book reference (Hawala) shown. Ask in English, اردو, Roman Urdu or Arabic — the reply (text and voice) comes in the same language, spoken with a voice for that language; if your device has no voice for it, the closest available voice is used and the reply says so. You can also send a photo of an Arabic book page for its Urdu translation. For a personal ruling, ask Qari Muhammad Imran Ali on <a href="#" data-wa="Assalam-o-Alaikum Qari Muhammad Imran Ali! I have a question about Shia fiqh.">WhatsApp</a>.</p>
 </section>
 <div class="toast" id="toast" role="status"></div>
 
@@ -3144,7 +3144,23 @@ document.getElementById("mnav-menu").addEventListener("click", function(){
      separately — no key is hardcoded here. The key is wiped from the
      session on sign-out.
    - Voice: browser Web Speech API (free) — speech recognition for
-     questions, speech synthesis for spoken replies.
+     questions, speech synthesis for spoken replies. SAME-LANGUAGE
+     VOICE: the microphone does NOT force English — listening is
+     auto-detecting. It tries the most likely spoken language first
+     (the language of the user's last question, the site's اردو mode,
+     or the device language; Urdu, English and Arabic are all tried,
+     in turn, when an attempt hears nothing usable), and the exact
+     reply language is then decided from what was actually heard —
+     Urdu script, Arabic markers, Roman-Urdu words or English words
+     in the transcript (detectLang). The written answer AND the
+     spoken reply both use that language. Speech synthesis picks a
+     voice whose language matches the reply language (Urdu answer →
+     Urdu voice, English → English, Arabic → Arabic, Roman Urdu →
+     Urdu voice, since Roman Urdu is spoken Urdu). If the device has
+     NO voice installed for that language, the closest available
+     voice is used (e.g. Hindi/Persian/Arabic for Urdu) and the reply
+     itself says so honestly, in the reply's own language, once per
+     language per session.
    - SAME-LANGUAGE REPLIES: the language of every question is detected
      (English, Urdu, Roman Urdu, Arabic) and the reply — text AND
      voice — is given in that same language. Urdu replies use this
@@ -4256,7 +4272,30 @@ document.getElementById("mnav-menu").addEventListener("click", function(){
   }
   function addNote(text){ addAssistant({ paras: [text] }); }
 
-  /* ---------------- Speech ---------------- */
+  /* ---------------- Speech ----------------
+     SAME-LANGUAGE VOICE, end to end:
+     (1) LISTENING auto-detects the spoken language — it never forces
+         English. The recogniser is started with the most likely
+         language first (the language of the user's last question,
+         then the site's اردو mode, then the device language; Urdu is
+         tried before English for this academy's audience when there
+         is no other signal). If an attempt hears nothing, or hears
+         only low-confidence words that do not fit that language at
+         all, the next language (Urdu / English / Arabic) is tried
+         automatically and the status line says which language is
+         being listened for, so the user simply speaks again. The
+         exact reply language is then decided from the transcript
+         itself by detectLang() — Urdu script vs Arabic markers vs
+         Roman-Urdu words vs English — in ask().
+     (2) The WRITTEN answer is produced in that same language by
+         ask() / localizeAnswer() (unchanged).
+     (3) The SPOKEN reply uses a synthesis voice for that SAME
+         language: Urdu answer → Urdu voice, English → English,
+         Arabic → Arabic, Roman Urdu → Urdu voice (Roman Urdu is
+         spoken Urdu; only its written script differs). If the device
+         has no voice installed for that language, the closest
+         available voice is used AND the reply says so honestly, in
+         the reply's own language (once per language per session). */
   var VOICES = [];
   function loadVoices(){ try { VOICES = window.speechSynthesis.getVoices() || []; } catch (e) {} }
   if ("speechSynthesis" in window) { loadVoices(); try { window.speechSynthesis.onvoiceschanged = loadVoices; } catch (e) {} }
@@ -4268,16 +4307,73 @@ document.getElementById("mnav-menu").addEventListener("click", function(){
     }
     return null;
   }
-  /* Spoken replies use the SAME language as the question: the voice and
-     BCP language come from the detected reply language (Urdu → ur-PK,
-     Roman Urdu → ur-PK, Arabic → ar-SA, English → en-US). Arabic-script
-     lines inside any reply prefer an Arabic-script voice (Urdu first
-     for Urdu replies, Arabic first otherwise). */
+  /* Closest-voice fallback chains, used ONLY when no voice exists for
+     the reply language itself — and always disclosed in the reply. */
+  var VOICE_FALLBACK = {
+    en: ["en"],
+    ur: ["ur", "hi", "fa", "ar", "en"],
+    roman: ["ur", "hi", "fa", "ar", "en"],
+    ar: ["ar", "fa", "ur", "hi", "en"]
+  };
+  var VOICE_LANG_NAMES = {
+    en: { en: "English", ur: "انگریزی", roman: "English", ar: "الإنجليزية" },
+    ur: { en: "Urdu", ur: "اردو", roman: "Urdu", ar: "الأردية" },
+    hi: { en: "Hindi", ur: "ہندی", roman: "Hindi", ar: "الهندية" },
+    fa: { en: "Persian", ur: "فارسی", roman: "Farsi", ar: "الفارسية" },
+    ar: { en: "Arabic", ur: "عربی", roman: "Arabic", ar: "العربية" }
+  };
+  function voiceNameFor(voiceLang, inLang){
+    var p = String(voiceLang || "").toLowerCase().split("-")[0];
+    var names = VOICE_LANG_NAMES[p];
+    return names ? (names[inLang] || names.en) : (voiceLang || "");
+  }
+  /* Resolve the voice for a reply language: { voice, exact } — exact
+     is true only when the voice's own language matches the reply
+     language (Urdu voice for Urdu/Roman Urdu, Arabic for Arabic,
+     English for English). */
+  function resolveVoice(lang){
+    var meta = LANGS[lang] || LANGS.en;
+    var exact = pickVoice(meta.vp);
+    if (exact) return { voice: exact, exact: true };
+    var chain = VOICE_FALLBACK[lang] || meta.vp;
+    var v = pickVoice(chain);
+    return { voice: v, exact: false };
+  }
+  var VOICE_NOTE = {
+    en: function(want, got){ return "Voice note: this device has no " + want + " voice installed, so I am speaking this answer with the closest available voice (" + got + "). The written answer above is in " + want + "."; },
+    ur: function(want, got){ return "آواز کا نوٹ: اس آلے پر " + want + " کی آواز موجود نہیں ہے، اس لیے یہ جواب قریب ترین دستیاب آواز (" + got + ") میں بولا جا رہا ہے۔ اوپر لکھا ہوا جواب " + want + " میں ہی ہے۔"; },
+    roman: function(want, got){ return "Voice note: Is device par " + want + " ki awaaz mojood nahi hai, is liye ye jawab sab se qareebi available awaaz (" + got + ") mein bola ja raha hai. Upar likha hua jawab " + want + " mein hi hai."; },
+    ar: function(want, got){ return "ملاحظة صوتية: لا يوجد صوت " + want + " مثبّت على هذا الجهاز، لذا يُنطق هذا الجواب بأقرب صوت متاح (" + got + "). أما الجواب المكتوب أعلاه فهو بـ" + want + "."; }
+  };
+  var VOICE_NONE_NOTE = {
+    en: "Voice note: this device has no voice installed that can speak this answer, so it cannot be read aloud here — the written answer above is complete.",
+    ur: "آواز کا نوٹ: اس آلے پر کوئی ایسی آواز موجود نہیں جو یہ جواب بول سکے، اس لیے یہ یہاں بول کر نہیں سنایا جا سکتا — اوپر لکھا ہوا جواب مکمل ہے۔",
+    roman: "Voice note: Is device par koi aisi awaaz mojood nahi jo ye jawab bol sake, is liye ye yahan bol kar nahi sunaya ja sakta — upar likha hua jawab mukammal hai.",
+    ar: "ملاحظة صوتية: لا يوجد على هذا الجهاز صوت يستطيع نطق هذا الجواب، فلا يمكن قراءته بصوت عالٍ هنا — والجواب المكتوب أعلاه كامل."
+  };
+  var shownVoiceNotes = {};
+  function noteVoiceFallback(lang, res){
+    /* Honest disclosure, once per language per session, added as its
+       own bubble in the reply's language right after the answer. */
+    if (!VOICES.length) return; /* voice list not loaded yet: the browser resolves by utterance lang itself — nothing to disclose */
+    var key = lang + "|" + (res.voice ? res.voice.lang : "none");
+    if (shownVoiceNotes[key]) return;
+    shownVoiceNotes[key] = true;
+    var want = voiceNameFor((LANGS[lang] || LANGS.en).bcp, lang);
+    var txt = res.voice ? (VOICE_NOTE[lang] || VOICE_NOTE.en)(want, voiceNameFor(res.voice.lang, lang)) : (VOICE_NONE_NOTE[lang] || VOICE_NONE_NOTE.en);
+    addAssistant({ paras: [txt], lang: lang });
+  }
   function speak(text, force, lang){
     if (!aiSignedIn()) return;
-    if (!("speechSynthesis" in window)) return;
     if (!soundOn && !force) return;
+    if (!("speechSynthesis" in window)) {
+      if (!shownVoiceNotes["nosynth"]) { shownVoiceNotes["nosynth"] = true; addAssistant({ paras: [VOICE_NONE_NOTE[lang] || VOICE_NONE_NOTE.en], lang: lang }); }
+      return;
+    }
+    loadVoices();
     var meta = LANGS[lang] || LANGS.en;
+    var res = resolveVoice(lang);
+    if (!res.exact) noteVoiceFallback(lang, res);
     try {
       window.speechSynthesis.cancel();
       String(text).split(/\n+/).forEach(function(seg){
@@ -4285,53 +4381,154 @@ document.getElementById("mnav-menu").addEventListener("click", function(){
         var arCount = (seg.match(/[\u0600-\u06FF]/g) || []).length;
         var u = new SpeechSynthesisUtterance(seg);
         if (arCount > seg.length * 0.35) {
-          var av = (lang === "ur") ? pickVoice(["ur", "ar"]) : pickVoice(["ar", "ur"]);
+          /* Arabic-script line: Urdu voice first for Urdu replies,
+             Arabic voice first for Arabic replies; otherwise the
+             closest Arabic-script voice, honestly the same chains. */
+          var prefs = (lang === "ur" || lang === "roman") ? ["ur", "ar", "fa", "hi"] : (lang === "ar") ? ["ar", "ur", "fa", "hi"] : ["ar", "ur", "fa", "hi"];
+          var av = pickVoice(prefs);
           if (av) { u.voice = av; u.lang = av.lang; }
-          else if (lang === "ar" || lang === "ur") { u.lang = meta.bcp; }
-          else return; /* English reply and no Arabic-script voice: skip the Arabic line rather than mispronounce it */
+          else if (lang === "ar" || lang === "ur" || lang === "roman") { u.lang = meta.bcp; }
+          else return; /* English reply and no Arabic-script voice at all: skip the Arabic line rather than mispronounce it */
+        } else if (res.voice) {
+          u.voice = res.voice; u.lang = res.voice.lang;
         } else {
-          var lv = pickVoice(meta.vp);
-          if (lv) { u.voice = lv; u.lang = lv.lang; } else u.lang = meta.bcp;
+          u.lang = meta.bcp;
         }
         u.rate = 0.98;
         window.speechSynthesis.speak(u);
       });
     } catch (e) {}
   }
+  /* --- Listening: auto-detect the spoken language --- */
   var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
   var recog = null, listening = false;
   if (!SR) micBtn.style.display = "none";
-  function setListening(on){
+  function setListening(on, text){
     listening = on;
     micBtn.classList.toggle("listening", on);
+    if (on && text) status.textContent = text;
     status.hidden = !on;
+  }
+  var RECOG_LANGS = { ur: { bcp: "ur-PK", name: "Urdu" }, en: { bcp: "en-US", name: "English" }, ar: { bcp: "ar-SA", name: "Arabic" } };
+  function recogCandidates(){
+    var order = [];
+    function push(code){ if (code && RECOG_LANGS[code] && order.indexOf(code) < 0) order.push(code); }
+    /* Most likely first: the language the user last asked in… */
+    push(lastLang === "roman" ? "ur" : lastLang);
+    /* …then the site's current language mode… */
+    if (document.body && document.body.classList.contains("ur-mode")) push("ur");
+    if (document.documentElement.lang === "ur") push("ur");
+    /* …then the device / browser language… */
+    try { var nl = String(navigator.language || "").toLowerCase().split("-")[0]; push(nl); } catch (e) {}
+    /* …then the academy's languages, Urdu first (its main audience),
+       then English, then Arabic. English is a candidate, never a
+       forced default. */
+    push("ur"); push("en"); push("ar");
+    return order;
+  }
+  var EN_COMMON = { the:1, is:1, are:1, what:1, how:1, why:1, when:1, where:1, who:1, which:1, can:1, do:1, does:1, i:1, you:1, me:1, my:1, please:1, tell:1, about:1, of:1, in:1, on:1, for:1, and:1, or:1, to:1, a:1, an:1, this:1, that:1, it:1, prayer:1, pray:1, quran:1, course:1, courses:1, fees:1, fee:1, class:1, classes:1, trial:1, free:1, book:1, islamic:1, islam:1, muslim:1, god:1, allah:1, prophet:1, imam:1, mosque:1, fasting:1, fast:1, charity:1, pilgrimage:1 };
+  /* How well a transcript fits the language the recogniser was set
+     to: the share of its words that are known words of that language
+     family. Used ONLY to decide — together with a low recognition
+     confidence — that the attempt heard the wrong language and the
+     next candidate should be tried. A confident transcript is always
+     accepted as heard. */
+  function transcriptFit(code, text){
+    var s = String(text || "");
+    if (code === "en") {
+      var lw = s.toLowerCase().replace(/[^a-z\s]/g, " ").split(/\s+/).filter(Boolean);
+      if (!lw.length) return 0;
+      var lh = 0;
+      lw.forEach(function(w){ if (EN_COMMON[w] || ROMAN_W[w]) lh++; });
+      return lh / lw.length;
+    }
+    var aw = s.split(/[\s،۔؟?؛,.:!()«»]+/).filter(function(w){ return /[\u0600-\u06FF]/.test(w); });
+    if (!aw.length) return 0;
+    var ah = 0;
+    aw.forEach(function(w){ if (URDU_SCRIPT_W.indexOf(w) > -1 || ARABIC_SCRIPT_W.indexOf(w) > -1) ah++; });
+    if (/[\u0679\u0688\u0691\u06BE\u06D2]/.test(s)) ah += 1; /* Urdu-only letters present */
+    return Math.min(1, ah / aw.length);
+  }
+  var listenCands = [], listenIdx = 0, listenSwitching = false, listenDone = false;
+  function startListening(idx){
+    listenIdx = idx;
+    var cand = listenCands[idx];
+    if (!cand) { setListening(false); return; }
+    var code = cand, meta = RECOG_LANGS[code];
+    var finalText = "", finalConf = null, settled = false;
+    try {
+      recog = new SR();
+      recog.lang = meta.bcp; /* this attempt's language — one of the auto-detect candidates, never a forced English default */
+      recog.interimResults = true;
+      try { recog.maxAlternatives = 3; } catch (e) { recog.maxAlternatives = 1; }
+      recog.onresult = function(ev){
+        var interim = "";
+        for (var i = ev.resultIndex; i < ev.results.length; i++) {
+          var r = ev.results[i];
+          if (r.isFinal) {
+            /* Pick the alternative that best fits a real language —
+               the recogniser's first guess is not always the one the
+               user actually spoke. */
+            var bestAlt = r[0], bestScore = -1;
+            for (var a = 0; a < r.length; a++) {
+              var alt = r[a]; if (!alt) continue;
+              var sc = transcriptFit(code, alt.transcript) + (alt.confidence || 0) * 0.25;
+              if (sc > bestScore) { bestScore = sc; bestAlt = alt; }
+            }
+            finalText += bestAlt.transcript;
+            if (typeof bestAlt.confidence === "number" && bestAlt.confidence > 0) finalConf = bestAlt.confidence;
+          } else interim += r[0].transcript;
+        }
+        input.value = finalText + interim;
+        var q = finalText.trim();
+        if (!q || settled) return;
+        /* Wrong-language guard: a transcript whose words barely fit
+           the attempted language AND that the recogniser itself was
+           unsure about is almost certainly speech in another
+           language forced into this one's script — try the next
+           candidate instead of answering gibberish. */
+        var fit = transcriptFit(code, q);
+        var unsure = (finalConf !== null && finalConf < 0.65);
+        if (unsure && fit < 0.15 && listenIdx < listenCands.length - 1) {
+          settled = true; listenDone = true; listenSwitching = true;
+          try { recog.stop(); } catch (e) {}
+          setListening(true, "Trying " + RECOG_LANGS[listenCands[listenIdx + 1]].name + "… speak now");
+          setTimeout(function(){ listenSwitching = false; if (listening) startListening(listenIdx + 1); }, 350);
+          return;
+        }
+        settled = true; listenDone = true;
+        setListening(false);
+        try { recog.stop(); } catch (e) {}
+        /* ask() runs detectLang() on the transcript, so the written
+           answer and the spoken reply both come back in the language
+           actually spoken — Urdu, English, Roman Urdu or Arabic. */
+        ask(q, true);
+      };
+      recog.onerror = function(ev){
+        if (listenDone) return;
+        if (ev.error === "not-allowed" || ev.error === "service-not-allowed") { listenDone = true; setListening(false); addNote("Microphone permission was blocked. Please allow microphone access in your browser, or type your question."); return; }
+        if (ev.error === "no-speech" && listenIdx < listenCands.length - 1) {
+          /* Nothing heard in this language — auto-try the next one. */
+          listenDone = true; listenSwitching = true;
+          setListening(true, "Trying " + RECOG_LANGS[listenCands[listenIdx + 1]].name + "… speak now");
+          setTimeout(function(){ listenSwitching = false; if (listening) startListening(listenIdx + 1); }, 350);
+          return;
+        }
+        listenDone = true; setListening(false);
+        if (ev.error === "no-speech") addNote("I could not hear you. Please try the microphone again, or type your question.");
+      };
+      recog.onend = function(){ if (!listenSwitching && !listenDone) setListening(false); else if (listenDone && !listenSwitching) setListening(false); };
+      recog.start();
+      setListening(true, "Listening in " + meta.name + " (auto-detect)… speak now");
+    } catch (e) { setListening(false); }
   }
   micBtn.addEventListener("click", function(){
     if (!aiSignedIn()) { paintAiGate(); return; }
     if (!SR) { addNote("Voice input is not supported in this browser — please type your question."); return; }
-    if (listening) { try { recog.stop(); } catch (e) {} setListening(false); return; }
-    try {
-      recog = new SR();
-      recog.lang = (lastLang && LANGS[lastLang]) ? LANGS[lastLang].bcp : (document.documentElement.lang === "ur" ? "ur-PK" : "en-US");
-      recog.interimResults = true; recog.maxAlternatives = 1;
-      var finalText = "";
-      recog.onresult = function(ev){
-        var interim = "";
-        for (var i = ev.resultIndex; i < ev.results.length; i++) {
-          if (ev.results[i].isFinal) finalText += ev.results[i][0].transcript;
-          else interim += ev.results[i][0].transcript;
-        }
-        input.value = finalText + interim;
-        if (finalText.trim()) { var q = finalText.trim(); setListening(false); try { recog.stop(); } catch (e) {} ask(q, true); }
-      };
-      recog.onerror = function(ev){
-        setListening(false);
-        if (ev.error === "not-allowed" || ev.error === "service-not-allowed") addNote("Microphone permission was blocked. Please allow microphone access in your browser, or type your question.");
-        else if (ev.error === "no-speech") addNote("I could not hear you. Please try the microphone again, or type your question.");
-      };
-      recog.onend = function(){ setListening(false); };
-      recog.start(); setListening(true);
-    } catch (e) { setListening(false); }
+    if (listening) { listenDone = true; listenSwitching = false; try { if (recog) recog.stop(); } catch (e) {} setListening(false); return; }
+    listenCands = recogCandidates();
+    listenDone = false; listenSwitching = false;
+    startListening(0);
   });
 
   /* ---------------- Ask flow ---------------- */
