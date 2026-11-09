@@ -1709,6 +1709,69 @@ let MYDOC = null;   // users/{uid} profile {name, email, role, ...}
 const ROLES = ["pending","student","parent","teacher","admin"];
 const ROLE_LABEL = { admin:"Admin", teacher:"Teacher", parent:"Parent", student:"Student", pending:"Awaiting activation" };
 
+/* ---------- AI Assistant Gemini key — persistent, ADMIN ONLY ----------
+   The persistent Gemini API key lives in ONE private Firestore document:
+   collection "adminConfig", document "gemini", field "apiKey". That
+   document is admin-only: this code requests it ONLY when the signed-in
+   user's role is "admin", so the key is never fetched for — or delivered
+   to — students, parents, teachers or signed-out visitors. The key is
+   never written by this page, never copied into the publicly readable
+   "settings" collection (which serves the public Fees section) or any
+   other shared store, and no key value is hardcoded here; the admin
+   places the key into adminConfig/gemini separately (Firebase console).
+   Firestore security rules must likewise allow reads of adminConfig to
+   admin accounts only.
+   A key typed into Admin Dashboard → Academy settings is a session
+   OVERRIDE: it wins over the persistent key for the admin's current
+   session only and is kept in browser memory — never saved anywhere.
+   window.__aiGeminiKey always holds the effective key for THIS session
+   ("" for anyone who is not the signed-in admin). */
+window.__aiGeminiKey = window.__aiGeminiKey || "";
+window.__aiGeminiKeyFirestore = "";   // key loaded from adminConfig/gemini (admin session only)
+window.__aiGeminiKeyManual = "";      // settings-field override (this session only)
+window.__aiAdminKeyUid = "";          // uid the persistent key was loaded for
+window.__aiAdminKeyInflight = null;
+window.__aiIsAdmin = function(){ return !!(ME && MYDOC && MYDOC.role === "admin"); };
+window.__aiResolveGeminiKey = function(){
+  const manual = String(window.__aiGeminiKeyManual || "").trim();
+  window.__aiGeminiKey = manual || String(window.__aiGeminiKeyFirestore || "").trim();
+  return window.__aiGeminiKey;
+};
+window.__loadAdminGeminiKey = async function(force){
+  if (!window.__aiIsAdmin() || !fbReady || !fbDb || !ME) {
+    /* Not the admin (or signed out): no key may remain usable in this
+       session — clear both sources so nothing leaks to another user. */
+    window.__aiGeminiKeyFirestore = "";
+    window.__aiGeminiKeyManual = "";
+    window.__aiAdminKeyUid = "";
+    window.__aiResolveGeminiKey();
+    return "";
+  }
+  const uid = ME.uid;
+  if (!force && window.__aiAdminKeyUid === uid && String(window.__aiGeminiKeyFirestore || "").trim()) {
+    window.__aiResolveGeminiKey();
+    return window.__aiGeminiKey;
+  }
+  if (!force && window.__aiAdminKeyInflight) return window.__aiAdminKeyInflight;
+  const run = (async () => {
+    try {
+      const d = await fbDb.collection("adminConfig").doc("gemini").get();
+      const v = (d && d.exists && d.data()) ? d.data().apiKey : "";
+      window.__aiGeminiKeyFirestore = (typeof v === "string") ? v.trim() : "";
+      if (window.__aiGeminiKeyFirestore) window.__aiAdminKeyUid = uid;
+    } catch (e) {
+      /* Denied or unreachable: Gemini simply stays off — never fall back
+         to any shared/public store for a key. */
+      window.__aiGeminiKeyFirestore = "";
+    }
+    window.__aiResolveGeminiKey();
+    return window.__aiGeminiKey;
+  })();
+  window.__aiAdminKeyInflight = run;
+  try { return await run; }
+  finally { if (window.__aiAdminKeyInflight === run) window.__aiAdminKeyInflight = null; }
+};
+
 function escH(s){ return String(s == null ? "" : s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
 function statusPill(s){ const m={"Present":"present","Absent":"absent","Late":"late","Excused":"excused","Class Rescheduled":"resched","Completed":"done","In Progress":"prog","Not Started":"todo","Pending":"prog","Approved":"done","Rejected":"absent","Scheduled":"prog"}; return '<span class="pill '+(m[s]||"todo")+'">'+escH(s)+'</span>'; }
 function attPct(recs){
@@ -1837,7 +1900,16 @@ function setRole(role){
 }
 if (fbReady && fbAuth) {
   fbAuth.onAuthStateChanged(async user => {
-    ME = user; MYDOC = null; paintPortal();
+    ME = user; MYDOC = null;
+    if (!user) {
+      /* Signed out: wipe every trace of the admin Gemini key from this
+         session so it can never be used by the next person here. */
+      window.__aiGeminiKeyFirestore = "";
+      window.__aiGeminiKeyManual = "";
+      window.__aiAdminKeyUid = "";
+      if (window.__aiResolveGeminiKey) window.__aiResolveGeminiKey();
+    }
+    paintPortal();
     if (window.__aiAuthChanged) window.__aiAuthChanged();
     if (user) {
       try {
@@ -1858,6 +1930,14 @@ if (fbReady && fbAuth) {
       } catch (e) { MYDOC = { name: user.displayName || "", email: user.email || "", role: "pending" }; }
       paintPortal();
       paintLibraryGate();
+      /* Admin only: load the persistent Gemini key from the private
+         adminConfig/gemini document, then refresh the AI gate so the
+         assistant picks it up. For every other role this loader clears
+         the key instead of fetching anything. */
+      if (window.__loadAdminGeminiKey) {
+        try { await window.__loadAdminGeminiKey(true); } catch (e) {}
+        if (window.__aiAuthChanged) window.__aiAuthChanged();
+      }
       const hh = location.hash || "";
       if (hh.indexOf("#reader/") === 0 || hh.indexOf("#kcat/") === 0) route();
     }
@@ -2173,6 +2253,10 @@ async function renderAdmin(){
   const progMap = {}; progress.forEach(p => { if (p.studentId) progMap[p.studentId] = p; });
   let feesDoc = null;
   try { feesDoc = await getDoc("settings", "fees"); } catch (e) {}
+  /* Refresh the persistent admin-only Gemini key status for the settings
+     card below (reads adminConfig/gemini — admin session only). */
+  try { await window.__loadAdminGeminiKey(true); } catch (e) {}
+  const gemPersistent = !!String(window.__aiGeminiKeyFirestore || "").trim();
 
   const comps = progress.map(p=>p.courseCompletion).filter(v=>v != null && !isNaN(v));
   const atts = progress.map(p=>attPct(p.attendance)).filter(v=>v != null);
@@ -2269,7 +2353,7 @@ async function renderAdmin(){
 
   /* Library manager + settings (academy tools) */
   + '<div class="grid g2" style="align-items:start"><form class="card" id="form-lib"><h3>Library manager</h3><p style="font-size:.9rem">Publish learning materials to the Digital Library.</p><div class="field"><label for="lb-t">Resource title *</label><input id="lb-t" required /></div><div class="field"><label for="lb-c">Category</label><select id="lb-c">'+LIB_CATS.slice(1).map(c=>'<option>'+escH(c)+'</option>').join("")+'</select></div><div class="field"><label for="lb-d">Description</label><input id="lb-d" placeholder="Short description" /></div><button class="btn btn-emerald btn-sm" type="submit">Publish to Library</button></form>'
-  + '<form class="card" id="form-settings"><h3>Academy settings</h3><div class="field"><label for="set-wa">WhatsApp / phone number (international format)</label><input id="set-wa" value="'+escH(settings.waNumber)+'" inputmode="numeric" /><small style="color:var(--muted)">Saving updates every WhatsApp button on this website for this visit.</small></div><div class="field"><label for="set-gemini">AI Assistant — free Google Gemini API key (optional)</label><input id="set-gemini" type="password" autocomplete="off" placeholder="Paste a free Gemini API key from Google AI Studio" value="'+escH(window.__aiGeminiKey || "")+'" /><small style="color:var(--muted)">Optional. Get a free key from Google AI Studio (aistudio.google.com → Get API key) and paste it here, then Save. For your safety the key is kept only in this browser for this visit — it is never stored on the website and never shown to visitors, because any key published on a public page can be copied and misused. While it is active here, the AI Assistant can also answer general questions beyond the verified Knowledge Center; fiqh answers always come from the verified content first, and personal rulings are always referred to Qari Sahib. Set a usage cap on the key in Google AI Studio. Clear the field and save to remove it.</small></div><div class="field"><label>Role-based access</label><p style="font-size:.92rem;color:var(--muted);margin:0">Students see only their own classes and records · Parents see only their own children · Teachers see their assigned students · Admin sees the whole academy.</p></div><button class="btn btn-gold btn-sm" type="submit">Save Settings</button></form></div>';
+  + '<form class="card" id="form-settings"><h3>Academy settings</h3><div class="field"><label for="set-wa">WhatsApp / phone number (international format)</label><input id="set-wa" value="'+escH(settings.waNumber)+'" inputmode="numeric" /><small style="color:var(--muted)">Saving updates every WhatsApp button on this website for this visit.</small></div><div class="field"><label for="set-gemini">AI Assistant — free Google Gemini API key (optional)</label><input id="set-gemini" type="password" autocomplete="off" placeholder="Paste a free Gemini API key from Google AI Studio" value="'+escH(window.__aiGeminiKeyManual || "")+'" /><small style="color:var(--muted)">Optional. Get a free key from Google AI Studio (aistudio.google.com → Get API key) and paste it here, then Save. Persistent admin key: '+(gemPersistent ? "ACTIVE — a key is saved in the private Firestore document adminConfig/gemini (field apiKey), which only a signed-in admin can read, and the AI Assistant uses it automatically in your admin sessions (broader answers, reading photos of Arabic pages, I'rab). It is never copied into any public collection and never sent to other users." : "none found yet — once a key is placed in the private Firestore document adminConfig/gemini (Firebase console → Firestore Database → adminConfig → gemini → field apiKey), the AI Assistant will use it automatically in your admin sessions; only a signed-in admin can read that document, and it is never copied into any public collection.")+' A key typed in this field overrides the persistent key for this visit only: it is kept only in this browser, never saved to the website or to Firestore, and never shown to visitors. While it is active here, the AI Assistant can also answer general questions beyond the verified Knowledge Center; fiqh answers always come from the verified content first, and personal rulings are always referred to Qari Sahib. Set a usage cap on the key in Google AI Studio. Clear the field and save to remove it.</small></div><div class="field"><label>Role-based access</label><p style="font-size:.92rem;color:var(--muted);margin:0">Students see only their own classes and records · Parents see only their own children · Teachers see their assigned students · Admin sees the whole academy.</p></div><button class="btn btn-gold btn-sm" type="submit">Save Settings</button></form></div>';
 
   /* --- wire admin actions --- */
   const rerender = ()=>paintPortal();
@@ -2410,8 +2494,16 @@ async function renderAdmin(){
     settings.waNumber = v; refreshWaLinks();
     const gkEl = document.getElementById("set-gemini");
     const gk = gkEl ? gkEl.value.trim() : "";
-    window.__aiGeminiKey = gk; /* session only — never stored on the website or sent to visitors */
-    toast(gk ? "Settings saved — WhatsApp number updated. The AI Assistant key is active in this browser for this visit only." : "Settings saved — WhatsApp number updated. The AI Assistant answers from the verified content only.");
+    /* Session override only: kept in this browser's memory and never
+       written to Firestore or anywhere else. An empty field means no
+       override, so the persistent admin-only key from adminConfig/gemini
+       (when present) applies instead. */
+    window.__aiGeminiKeyManual = gk;
+    if (window.__aiResolveGeminiKey) window.__aiResolveGeminiKey();
+    const pers = !!String(window.__aiGeminiKeyFirestore || "").trim();
+    toast(gk ? "Settings saved — WhatsApp number updated. Your typed AI key overrides the persistent key in this browser for this visit only."
+      : pers ? "Settings saved — WhatsApp number updated. The persistent admin-only Gemini key (adminConfig/gemini) is active for your signed-in admin sessions."
+      : "Settings saved — WhatsApp number updated. The AI Assistant answers from the verified content only.");
   });
   if (students.length) wireProgressEditor("adm", students, progMap);
 }
@@ -3007,14 +3099,20 @@ document.getElementById("mnav-menu").addEventListener("click", function(){
    - It NEVER invents a fiqh ruling, Hadith, Quranic reference, book
      name or page number. Anything not covered is answered honestly and
      the visitor is directed to Qari Muhammad Imran Ali on WhatsApp.
-   - If the academy admin pastes a free Google Gemini API key in the
-     Admin Dashboard → Academy settings, general questions beyond the
-     verified content may be answered by Gemini (with strict
-     no-invented-rulings instructions) during that visit. The key is
-     held only in the admin's own browser memory for the visit — it is
-     never hardcoded here, never stored on the website, and never
-     fetched by or delivered to other visitors, because a key placed
-     on a public page could be copied by anyone.
+   - GEMINI KEY (admin only): the persistent key is read from the
+     private Firestore document adminConfig/gemini (field apiKey) —
+     requested ONLY when the signed-in user's role is admin, so it is
+     never fetched by or delivered to students, parents, teachers or
+     visitors, and never copied into any publicly readable collection.
+     With that key active in an admin session, Gemini (with strict
+     no-invented-rulings instructions) answers general questions beyond
+     the verified content, reads photos of Arabic pages, adds I'rab and
+     renders full same-language replies. A key typed into Admin
+     Dashboard → Academy settings overrides the persistent key for the
+     admin's current session only (browser memory, never saved). The
+     key value is placed into adminConfig/gemini separately — no key is
+     hardcoded here. Signed-in non-admin users keep receiving verified
+     Knowledge Center answers only.
    - Voice: browser Web Speech API (free) — speech recognition for
      questions, speech synthesis for spoken replies.
    - SAME-LANGUAGE REPLIES: the language of every question is detected
@@ -3680,15 +3778,29 @@ document.getElementById("mnav-menu").addEventListener("click", function(){
     return ans;
   }
 
-  /* ---------------- Gemini (only when the admin has pasted a free key this visit) ----------------
-     The key lives only in window.__aiGeminiKey, set from the Admin Dashboard
-     settings field during the admin's own session. It is deliberately never
-     read from Firestore or any shared store: the settings collection is
-     publicly readable (it serves the public Fees section), so a key stored
-     there would be exposed to every visitor. */
+  /* ---------------- Gemini (admin-only key) ----------------
+     Effective key = window.__aiGeminiKey, resolved by the portal code:
+     the Admin settings field override (this session only) wins; otherwise
+     the persistent key from the private Firestore document
+     adminConfig/gemini (field apiKey), which the portal code requests
+     ONLY for a signed-in admin — for everyone else it resolves to "" and
+     any previously loaded key is wiped. loadAiKey() returns a promise
+     because the persistent key may still be loading from Firestore;
+     every Gemini path below awaits it before reading the key. */
+  var aiKeyInflight = null;
   function loadAiKey(){
-    /* No-op by design: the key is never fetched from a shared store. */
     if (typeof window.__aiGeminiKey !== "string") window.__aiGeminiKey = window.__aiGeminiKey || "";
+    if (typeof window.__loadAdminGeminiKey !== "function") return Promise.resolve(window.__aiGeminiKey || "");
+    if (!aiKeyInflight) {
+      aiKeyInflight = Promise.resolve()
+        .then(function(){ return window.__loadAdminGeminiKey(); })
+        .catch(function(){ return ""; })
+        .then(function(k){
+          aiKeyInflight = null;
+          return (typeof k === "string" && k) ? k : (window.__aiGeminiKey || "");
+        });
+    }
+    return aiKeyInflight;
   }
   var GEMINI_SYS = "You are the AI Assistant of Shia Online Quran Academy (based in Faisalabad, Pakistan; one-to-one online Quran classes worldwide; WhatsApp +92 307 4348899; founder and teacher Qari Muhammad Imran Ali). Answer briefly and helpfully, in plain language. STRICT RULES: (1) Never issue a personal fatwa or binding religious ruling. For Shia fiqh questions give only general educational information, and always advise the user to follow their own Marja-e-Taqlid and to ask Qari Muhammad Imran Ali on WhatsApp +92 307 4348899 for personal rulings. (2) Never invent a Hadith, a Quranic verse, a book name, an author or a page number. Name a book reference only if you are certain of it; otherwise say plainly that you do not have a verified reference. (3) If you do not know something, say so honestly. (4) Always reply in the SAME language as the user's message: English question → English reply; Urdu (script) → Urdu; Roman Urdu → Roman Urdu; Arabic → Arabic. (5) When the user shares Arabic text (typed or in a photo) for translation: first reproduce the Arabic WITH full I'rab (tashkeel — zabar, zer, pesh, tashdeed, jazm, tanween) wherever the original lacks vowel marks, making every effort to vowel it fully; never guess an I'rab or a meaning you are unsure of — say plainly where you are unsure. Keep the answer under 220 words unless you are transcribing and translating a book page.";
   function askGemini(q, langName){
@@ -4214,32 +4326,34 @@ document.getElementById("mnav-menu").addEventListener("click", function(){
     addTyping();
     var local = findAnswer(q);
     if (local) {
-      loadAiKey();
-      var hasKey = !!String(window.__aiGeminiKey || "").trim();
-      if (lang !== "en" && hasKey) {
-        /* Full AI present this session: render the whole verified
-           answer in the question's language via Gemini translation. */
-        var rawAns = JSON.parse(JSON.stringify(local));
-        rawAns.lang = lang;
-        if (lang === "ur" && rawAns.hawala) rawAns.hawala = urSmart(rawAns.hawala);
-        geminiTranslate(rawAns, lang).then(function(tAns){
-          removeTyping();
-          var ans = tAns || localizeAnswer(local, lang);
-          addAssistant(ans);
-          if (viaVoice) speak(answerText(ans), false, lang);
-        });
-      } else {
-        setTimeout(function(){
-          removeTyping();
-          var ans = localizeAnswer(local, lang);
-          addAssistant(ans);
-          if (viaVoice) speak(answerText(ans), false, lang);
-        }, 420);
-      }
+      loadAiKey().then(function(){
+        var hasKey = !!String(window.__aiGeminiKey || "").trim();
+        if (lang !== "en" && hasKey) {
+          /* Full AI present this session: render the whole verified
+             answer in the question's language via Gemini translation. */
+          var rawAns = JSON.parse(JSON.stringify(local));
+          rawAns.lang = lang;
+          if (lang === "ur" && rawAns.hawala) rawAns.hawala = urSmart(rawAns.hawala);
+          geminiTranslate(rawAns, lang).then(function(tAns){
+            removeTyping();
+            var ans = tAns || localizeAnswer(local, lang);
+            addAssistant(ans);
+            if (viaVoice) speak(answerText(ans), false, lang);
+          });
+        } else {
+          setTimeout(function(){
+            removeTyping();
+            var ans = localizeAnswer(local, lang);
+            addAssistant(ans);
+            if (viaVoice) speak(answerText(ans), false, lang);
+          }, 420);
+        }
+      });
       return;
     }
-    loadAiKey();
-    askGemini(q, LANGS[lang].name).then(function(text){
+    loadAiKey().then(function(){
+      return askGemini(q, LANGS[lang].name);
+    }).then(function(text){
       removeTyping();
       var ans = text ? geminiAnswer(text) : fallbackAnswerL(q, lang);
       ans.lang = lang;
@@ -4254,24 +4368,25 @@ document.getElementById("mnav-menu").addEventListener("click", function(){
     addUserMsg(text);
     input.value = "";
     addTyping();
-    loadAiKey();
-    if (String(window.__aiGeminiKey || "").trim()) {
-      askGeminiArabic("text", text, null).then(function(ans){
-        if (ans) {
-          removeTyping(); addAssistant(ans);
-          if (viaVoice) speak(answerText(ans), false, "ur");
-          return;
-        }
-        matchVerifiedArabic(text).then(function(m){
-          removeTyping();
-          addAssistant(m ? verifiedArabicAnswer(m, "typed", null, lang, true) : noMatchArabicAnswer("typed", lang, null, true));
+    loadAiKey().then(function(){
+      if (String(window.__aiGeminiKey || "").trim()) {
+        askGeminiArabic("text", text, null).then(function(ans){
+          if (ans) {
+            removeTyping(); addAssistant(ans);
+            if (viaVoice) speak(answerText(ans), false, "ur");
+            return;
+          }
+          matchVerifiedArabic(text).then(function(m){
+            removeTyping();
+            addAssistant(m ? verifiedArabicAnswer(m, "typed", null, lang, true) : noMatchArabicAnswer("typed", lang, null, true));
+          });
         });
+        return;
+      }
+      matchVerifiedArabic(text).then(function(m){
+        removeTyping();
+        addAssistant(m ? verifiedArabicAnswer(m, "typed", null, lang, false) : noMatchArabicAnswer("typed", lang, null, false));
       });
-      return;
-    }
-    matchVerifiedArabic(text).then(function(m){
-      removeTyping();
-      addAssistant(m ? verifiedArabicAnswer(m, "typed", null, lang, false) : noMatchArabicAnswer("typed", lang, null, false));
     });
   }
   if (attachBtn) attachBtn.addEventListener("click", function(){
@@ -4300,16 +4415,17 @@ document.getElementById("mnav-menu").addEventListener("click", function(){
         var dataUrl = cv.toDataURL("image/jpeg", 0.85);
         addUserImage(dataUrl);
         addTyping();
-        loadAiKey();
-        if (String(window.__aiGeminiKey || "").trim()) {
-          setAiStatus("Reading your photo with the full AI (Gemini)…");
-          askGeminiArabic("image", null, dataUrl.split(",")[1]).then(function(ans){
-            if (ans) { setAiStatus(null); removeTyping(); addAssistant(ans); return; }
-            ocrImageFlow(dataUrl, true);
-          });
-        } else {
-          ocrImageFlow(dataUrl, false);
-        }
+        loadAiKey().then(function(){
+          if (String(window.__aiGeminiKey || "").trim()) {
+            setAiStatus("Reading your photo with the full AI (Gemini)…");
+            askGeminiArabic("image", null, dataUrl.split(",")[1]).then(function(ans){
+              if (ans) { setAiStatus(null); removeTyping(); addAssistant(ans); return; }
+              ocrImageFlow(dataUrl, true);
+            });
+          } else {
+            ocrImageFlow(dataUrl, false);
+          }
+        });
       };
       img.onerror = function(){ addNote("That image could not be opened. Please try another photo of the page."); };
       img.src = rd.result;
