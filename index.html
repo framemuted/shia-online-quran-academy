@@ -3701,7 +3701,8 @@ document.getElementById("mnav-menu").addEventListener("click", function(){
     ar:    { name: "Arabic",     bcp: "ar-SA", vp: ["ar"] }
   };
   var lastLang = "en";
-  var ROMAN_W = { kya:2, hai:2, hain:2, kaise:2, kese:2, batao:2, bataein:2, btao:2, mujhe:2, namaz:2, wuzu:2, wudu:2, chahiye:2, chahye:2, shukria:2, tarika:2, tareeqa:2, kyun:2, kyon:2, kahan:2, kitna:2, kitne:2, kitni:2, hota:2, hoti:2, karna:2, seekhna:2, parhna:2, pooch:2, sawal:2, jawab:2, masla:2, kitab:2, hawala:2, mera:1, meri:1, mere:1, aap:1, apka:1, dua:1, ka:1, ki:1, ke:1, mein:1, main:1, aur:1, nahi:1, kab:1, kon:1, kaun:1, kis:1, bhi:1, se:1, par:1, ne:1, ho:1, ye:1, yeh:1, wo:1, woh:1, wala:1, wali:1, gaya:1, raha:1, rahi:1, milega:1, lagta:1, zaroor:1, ustad:1, sahib:1, sahab:1, bhai:1 };
+  var ROMAN_W = { kya:2, kia:2, hai:2, hain:2, hy:2, he:1, hoon:2, hun:2, kaise:2, kese:2, kaisay:2, kesay:2, kaisa:2, kaisi:2, batao:2, bataein:2, batain:2, batayein:2, batayen:2, bata:1, mujhe:2, mujhy:2, mujhko:2, hamein:2, hamen:2, tumhe:2, aapko:2, namaz:2, namaaz:2, wuzu:2, wudu:2, ghusl:2, roza:2, rozay:2, roze:2, khums:2, zakat:2, zakaat:2, chahiye:2, chahye:2, chahta:2, chahti:2, chahte:2, shukria:2, shukriya:2, tarika:2, tareeqa:2, tariqa:2, kyun:2, kyon:2, kyu:2, kahan:2, kidhar:2, kitna:2, kitne:2, kitni:2, konsa:2, konsi:2, kisko:2, kiska:2, kiski:2, kisne:2, hota:2, hoti:2, hote:2, hoga:2, hogi:2, karna:2, karni:2, karne:2, karo:2, karein:2, karain:2, karen:2, krain:2, karte:2, karta:2, karti:2, krta:2, krti:2, krte:2, krna:2, kar:1, kr:1, karke:1, seekhna:2, seekhni:2, seekho:2, sikhna:2, sikhao:2, samjhao:2, samajh:2, parhna:2, parhne:2, parhte:2, parhti:2, parhta:2, parho:2, parh:1, likhna:2, likho:2, pooch:2, poocho:2, sawal:2, sawalat:2, jawab:2, masla:2, masail:2, masala:1, kitab:2, kitaab:2, hawala:2, dua:2, duas:1, baat:2, bat:2, baatein:2, bol:2, bolta:2, bolti:2, bolte:2, bolna:2, sunao:2, suno:2, dekho:2, haal:2, hal:1, theek:2, thik:2, sahi:2, sai:2, ghalat:2, galat:2, matlab:2, maqsad:2, zaroori:2, zaroorat:2, madad:2, rehnumai:2, tafseel:2, tarjuma:2, ibarat:2, alfaaz:2, jumla:1, waqt:2, din:1, raat:1, subah:1, sham:1, aaj:1, aj:1, kal:1, abhi:1, kabhi:2, phir:2, lekin:2, magar:2, agar:2, jab:2, tab:2, koi:2, kuch:2, sab:2, log:1, ghar:1, khana:2, milta:2, milti:2, mila:2, mili:2, lagta:1, lagti:2, sakta:2, sakti:2, sakte:2, jata:2, jati:2, jate:2, aata:2, aati:2, aate:2, deta:2, deti:2, leta:2, hona:2, tha:2, thi:2, the:1, hua:2, hui:2, hue:2, aaya:2, aayi:2, dain:2, dein:2, zaroor:1, bohat:2, bahut:2, thora:2, thoda:2, zyada:2, ziada:2, sirf:2, bilkul:2, shayad:2, kyunki:2, kyunke:2, isliye:2, warna:2, saath:2, sath:2, pehle:2, pehlay:2, baad:1, andar:1, bahar:1, paas:1, upar:1, neeche:1, aage:1, peeche:1, liye:2, baray:2, taraf:2, darmiyan:2, shuru:2, khatam:2, dusra:2, doosra:2, acha:2, achha:2, naraz:2, pareshan:2, mushkil:2, asan:2, aasan:2, hamesha:2, ustad:1, ustaad:1, shagird:2, madarsa:2, sahib:1, sahab:1, bhai:1, mera:1, meri:1, mere:1, hamara:2, hamari:2, tumhara:2, tumhari:2, uska:2, iska:2, unka:2, apna:2, apni:2, apne:2, aap:2, ka:1, ki:1, ke:1, mein:1, main:1, mn:2, mai:1, aur:1, nahi:2, nhi:2, ni:2, na:1, kab:1, kon:2, kaun:1, kis:1, bhi:1, se:1, par:1, ne:1, ho:1, ye:1, yeh:1, wo:1, woh:1, is:1, us:1, to:1, do:1, wala:1, wali:1, wale:1, walay:1, gaya:1, gayi:2, gaye:2, raha:1, rahi:2, rahe:2, rha:2, rhi:2, rhe:2, milega:1, deen:2, duniya:2, dunia:2, jannat:2, jahannam:2, gunah:2, gunaah:2, sawab:2, neki:2, farz:2, sunnat:2, nafil:2, makrooh:2, azan:2, adhan:2, azaan:2, sajda:2, ruku:2, sehri:2, ramzan:2, hadees:2, kuran:2, kumayl:2, arbaeen:2, chehlum:2, ghadeer:2, majlis:2, matam:2, azadari:2, nauha:2, manqabat:2, imambargah:2, jaiz:2, najaiz:2, tauba:2, istighfar:2, shukar:2, sabr:2, sabar:2, ilm:2, taleem:2, zuban:2, zubaan:2, urdu:1, quran:1, allah:1, rasool:1, nabi:1, imam:1, surah:1, ayat:1, hadith:1, fiqh:1, halal:1, haram:1, makruh:1, wajib:1, mustahab:2, sunnah:1, islam:1, masjid:1, hajj:1, umrah:1, ziyarat:1, ashura:1, muharram:1, ramadan:1, iftar:1, iftaar:1, taraweeh:1, karbala:1, hussain:1, jumma:2, eid:1, fees:1 };;
+  var EN_W = { what:2, how:2, why:2, when:2, where:2, who:2, whom:2, which:2, is:2, are:2, was:2, were:2, do:2, does:2, did:2, can:2, could:2, should:2, would:2, will:2, shall:2, may:2, might:2, must:2, the:2, please:2, tell:2, explain:2, describe:2, give:1, show:1, speak:1, say:1, me:1, my:1, mine:1, you:1, your:1, yours:1, he:1, she:1, it:1, its:1, we:1, they:1, them:1, us:1, our:1, their:1, this:1, that:1, these:1, those:1, there:1, here:1, about:1, of:1, for:1, from:1, with:1, without:1, and:1, or:1, but:1, if:1, then:1, than:1, not:1, no:1, yes:1, very:1, much:1, many:1, more:1, most:1, any:1, some:1, all:1, every:1, each:1, other:1, another:1, same:1, different:1, good:1, bad:1, big:1, small:1, new:1, old:1, first:1, last:1, one:1, two:1, day:1, today:1, tomorrow:1, yesterday:1, time:1, year:1, people:1, way:1, thing:1, things:1, world:1, life:1, place:1, week:1, problem:1, fact:1, be:1, have:1, has:1, had:1, been:1, am:1, an:1, a:1, to:1, in:1, on:1, at:1, by:1, just:1, only:1, also:1, really:1, get:1, got:1, make:1, made:1, take:1, know:1, think:1, see:1, come:1, want:1, need:1, like:1, work:1, call:1, try:1, ask:1, feel:1, keep:1, let:1, seem:1, help:1, talk:1, turn:1, start:1 };;
   var URDU_SCRIPT_W = ["ہے","ہیں","میں","کیا","اور","کے","کا","کی","سے","نہیں","آپ","یہ","وہ","بھی","پر","کو","نے","بتائیں","بتاؤ","چاہیے","چاہتا","چاہتی","چاہتے","مجھے","میرا","میری","میرے","ہمارا","کس","کب","کیوں","کون","کیسے","کیسا","پڑھیں","پڑھنا","پڑھتے","کرتا","کرتی","کرتے","رہا","رہی","رہے","گا","گی","گے","والا","والی","والے","لیے","ذریعے","مطلب","یعنی","اگر","مگر","لیکن","کیونکہ","ہوتا","ہوتی","ہوتے","ملتا","ملے","دیں","لیں","تھا","تھی","تھے","ہوگا","ہوگی","جائے","آئے","کھانا","سکے","سکتا","سکتی","دیا","لیا","گیا","گئی","ابھی","بہت","اچھا","براہ","کرم","مہربانی","شکریہ","جزاک"];
   var ARABIC_SCRIPT_W = ["كيف","لماذا","متى","أين","الذي","التي","هذا","هذه","ذلك","تلك","عند","لدى","يجب","يمكن","هي","هو","في","فيه","عليه","إليه","لأن","حيث","عندما","إذا","لكن","ثم","سوف","قد","لم","لن","أي","من هو","ما هو","ما هي"];
   function detectLang(text){
@@ -3725,9 +3726,19 @@ document.getElementById("mnav-menu").addEventListener("click", function(){
       if (/(ما هو|ما هي|من هو|كيف|لماذا)/.test(s)) arScore += 3;
       return { code: arScore > urScore ? "ar" : "ur" };
     }
-    var score2 = 0;
-    s.toLowerCase().replace(/[^a-z\s]/g, " ").split(/\s+/).forEach(function(t){ if (ROMAN_W[t]) score2 += ROMAN_W[t]; });
-    return { code: score2 >= 3 ? "roman" : "en" };
+    var lowT = " " + s.toLowerCase().replace(/[^a-z\s]/g, " ") + " ";
+    var rScore = 0, eScore = 0;
+    lowT.split(/\s+/).filter(Boolean).forEach(function(t){ if (ROMAN_W[t]) rScore += ROMAN_W[t]; if (EN_W[t]) eScore += EN_W[t]; });
+    /* Roman Urdu grammar signatures — a sentence-final hai/hain, the
+       'kya … hai' question frame and Urdu object pronouns — outweigh
+       stray English words. Latin letters alone NEVER mean English:
+       Roman Urdu is scored on its own words, English on its own, and
+       the stronger language wins. */
+    if (/\b(hai|hain|hy)\s*[?.!]*$/.test(s.trim().toLowerCase())) rScore += 2;
+    if (/\bk(ya|ia)\b[^.?!]*\b(hai|hain|hy)\b/.test(lowT)) rScore += 2;
+    if (/\b(mujhe|mujhy|hamein|hamen|tumhe|tumhen|aapko)\b/.test(lowT)) rScore += 2;
+    var isRoman = (rScore >= 3 && rScore >= eScore) || (rScore >= 2 && eScore === 0);
+    return { code: isRoman ? "roman" : "en" };
   }
   function urTr(s){
     try {
@@ -4011,7 +4022,7 @@ document.getElementById("mnav-menu").addEventListener("click", function(){
      then fall back honestly (verified Knowledge Center, verified
      Arabic library, built-in general replies). */
   var GEMINI_PROXY_URL = "https://script.google.com/macros/s/AKfycbw7W0yI0y7dzD2DSy1jEMApCZhwah66jjzX6R6eXEtiugE_fM0MCQ-YutZ1Gv3LhdYQBg/exec";
-  var GEMINI_SYS = "You are the AI Assistant of Shia Online Quran Academy (based in Faisalabad, Pakistan; one-to-one online Quran classes worldwide; WhatsApp +92 307 4348899; founder and teacher Qari Muhammad Imran Ali). You are a friendly, helpful GENERAL assistant: you chat and answer questions on ANY topic — everyday life, study and homework help, general knowledge, science, history, languages, technology, practical advice and friendly conversation — not only religion. Answer helpfully and in plain language, and NEVER refuse, deflect or redirect a question merely because it is not about fiqh; only a personal religious ruling is referred to Qari Sahib. STRICT RULES FOR RELIGIOUS QUESTIONS: (1) Never issue a personal fatwa or binding religious ruling. For Shia fiqh questions give only general educational information, and advise the user to follow their own Marja-e-Taqlid and to ask Qari Muhammad Imran Ali on WhatsApp +92 307 4348899 for personal rulings. (2) Never invent a Hadith, a Quranic verse, a book name, an author or a page number. Name a book reference only if you are certain of it; otherwise say plainly that you do not have a verified reference. (3) If you do not know something, say so honestly. (4) Always reply in the SAME language as the user's message, whatever language it is: English → English; Urdu (script) → Urdu; Roman Urdu → Roman Urdu; Arabic → Arabic; any other language → that same language. Never switch languages. (5) When the user shares Arabic text (typed or in a photo) for translation: first reproduce the Arabic WITH full I'rab (tashkeel — zabar, zer, pesh, tashdeed, jazm, tanween) wherever the original lacks vowel marks, making every effort to vowel it fully; never guess an I'rab or a meaning you are unsure of — say plainly where you are unsure. Keep the answer under 300 words unless you are transcribing and translating a book page.";
+  var GEMINI_SYS = "You are the AI Assistant of Shia Online Quran Academy (based in Faisalabad, Pakistan; one-to-one online Quran classes worldwide; WhatsApp +92 307 4348899; founder and teacher Qari Muhammad Imran Ali). You are a friendly, helpful GENERAL assistant: you chat and answer questions on ANY topic — everyday life, study and homework help, general knowledge, science, history, languages, technology, practical advice and friendly conversation — not only religion. Answer helpfully and in plain language, and NEVER refuse, deflect or redirect a question merely because it is not about fiqh; only a personal religious ruling is referred to Qari Sahib. STRICT RULES FOR RELIGIOUS QUESTIONS: (1) Never issue a personal fatwa or binding religious ruling. For Shia fiqh questions give only general educational information, and advise the user to follow their own Marja-e-Taqlid and to ask Qari Muhammad Imran Ali on WhatsApp +92 307 4348899 for personal rulings. (2) Never invent a Hadith, a Quranic verse, a book name, an author or a page number. Name a book reference only if you are certain of it; otherwise say plainly that you do not have a verified reference. (3) If you do not know something, say so honestly. (4) Always reply in the SAME language as the user's message, whatever language it is: English → English; Urdu (script) → Urdu; Roman Urdu → Roman Urdu; Arabic → Arabic; any other language → that same language. Never switch languages. ROMAN URDU MEANS Urdu written in Latin/Roman letters (for example 'Namaz kaise parhte hain?' or 'Khums kya hai?'): Latin letters do NOT make a message English — if the user's words are Roman Urdu, your ENTIRE reply must be Roman Urdu in Latin letters, never English and never Urdu script, and no sentence or paragraph may be left in English. This same-language rule covers EVERY language and the WHOLE reply, in text and in voice. ACCURACY IS MANDATORY on every topic, fiqh or general: give the correct, accurate answer; if you genuinely do not know or are unsure, say so honestly in the user's language instead of guessing — never invent facts, numbers, references, Hadith, verses or rulings. (5) When the user shares Arabic text (typed or in a photo) for translation: first reproduce the Arabic WITH full I'rab (tashkeel — zabar, zer, pesh, tashdeed, jazm, tanween) wherever the original lacks vowel marks, making every effort to vowel it fully; never guess an I'rab or a meaning you are unsure of — say plainly where you are unsure. Keep the answer under 300 words unless you are transcribing and translating a book page.";
   function loadAiProxy(){ return Promise.resolve(true); }
   function extractProxyText(data){
     if (data == null) return null;
@@ -4054,8 +4065,15 @@ document.getElementById("mnav-menu").addEventListener("click", function(){
       document.head.appendChild(sc);
     });
   }
-  function askGemini(q, langName){
-    var prompt = GEMINI_SYS + "\n\nUser question: " + q + (langName ? "\n\n[Instruction: reply entirely in " + langName + " — the same language as the question.]" : "");
+  var LANG_LOCK = {
+    en: "LANGUAGE LOCK — ENGLISH: Write your ENTIRE reply in English only.",
+    ur: "LANGUAGE LOCK — URDU SCRIPT: Write your ENTIRE reply in Urdu (Urdu script) only. Do not write in English and do not write in Roman Urdu.",
+    roman: "LANGUAGE LOCK — ROMAN URDU: The user wrote in Roman Urdu — Urdu written in Latin/Roman letters (e.g. 'Namaz kaise parhte hain?', 'Khums kya hai?'). Write your ENTIRE reply in Roman Urdu only: the Urdu language in Latin letters. Do NOT write in English and do NOT use Urdu or Arabic script (names like Quran, Namaz and book names stay as they are). No paragraph may be left in English.",
+    ar: "LANGUAGE LOCK — ARABIC: Write your ENTIRE reply in Arabic only. Do not write in English or Urdu."
+  };
+  var ACCURACY_LOCK = "ACCURACY LOCK: Give the correct, accurate answer on every topic. If you genuinely do not know or are unsure, say so honestly in the same language — never invent facts, numbers, references, Hadith, verses or rulings.";
+  function askGemini(q, langName, langCode){
+    var prompt = GEMINI_SYS + "\n\nUser question: " + q + "\n\n[" + (LANG_LOCK[langCode] || ("Instruction: reply entirely in " + (langName || "English") + " — the same language as the question.")) + " " + ACCURACY_LOCK + "]";
     return geminiProxyCall(prompt, langName || "English", 45000);
   }
 
@@ -4254,19 +4272,40 @@ document.getElementById("mnav-menu").addEventListener("click", function(){
     if (ans.title) segs.push(ans.title);
     (ans.paras || []).forEach(function(p){ segs.push(p); });
     (ans.arabic || []).forEach(function(l){ if (l.en) segs.push(l.en); });
+    if (ans.hawala) segs.push(ans.hawala);
     if (!segs.length) return Promise.resolve(null);
-    var trPrompt = "Translate each segment below faithfully into " + LANGS[lang].name + ". The segments are separated by a line containing only the character §. Keep every § separator line exactly as it is, and keep the number of segments identical. Do not add, remove, shorten or change any religious content, names, book titles, Quranic references or numbers. Output only the translation.\n\n" + segs.join("\n§\n");
-    return geminiCall([{ text: trPrompt }], 1600, LANGS[lang].name).then(function(t){
-      if (!t) return null;
-      var parts = t.split(/\n?\s*§\s*\n?/).map(function(x){ return x.trim(); }).filter(function(x, i, a){ return x !== "" || a.length === segs.length; });
+    function build(parts){
       if (parts.length !== segs.length) return null;
       var out = JSON.parse(JSON.stringify(ans));
       var i = 0;
       if (out.title) out.title = parts[i++];
       out.paras = (ans.paras || []).map(function(){ return parts[i++]; });
       (out.arabic || []).forEach(function(l){ if (l.en) l.en = parts[i++]; });
+      if (out.hawala) out.hawala = parts[i++];
       out.lang = lang;
       return out;
+    }
+    var langDesc = LANGS[lang].name + (lang === "roman" ? " (Urdu written in Latin/Roman letters — not English, not Urdu script)" : "");
+    var trPrompt = "TRANSLATION TASK — output ONLY the translation, with no introduction, explanation or extra text. Translate each segment below faithfully into " + langDesc + ". The segments are separated by a line containing only the character §. Keep every § separator line exactly as it is, and keep the number of segments identical. Do not add, remove, shorten or change any religious content, names, book titles, Quranic references or numbers.\n\n" + segs.join("\n§\n");
+    return geminiCall([{ text: trPrompt }], 1600, LANGS[lang].name).then(function(t){
+      if (t) {
+        var parts = t.split(/\n?\s*§\s*\n?/).map(function(x){ return x.trim(); }).filter(function(x, i, a){ return x !== "" || a.length === segs.length; });
+        var built = build(parts);
+        if (built) return built;
+      }
+      /* The bulk reply did not come back in segment format: translate
+         segment by segment through the same server proxy, so the
+         WHOLE answer — title, every paragraph, Arabic glosses AND
+         the Hawala line — still arrives in the question's language
+         instead of leaving English paragraphs behind. */
+      return Promise.all(segs.map(function(seg){
+        if (!/[A-Za-z\u0600-\u06FF]/.test(seg)) return Promise.resolve(seg);
+        var one = "TRANSLATION TASK — output ONLY the translation, with no introduction or explanation. Translate the following text faithfully into " + langDesc + ". Do not change names, book titles, references or numbers.\n\n" + seg;
+        return geminiCall([{ text: one }], 900, LANGS[lang].name);
+      })).then(function(translated){
+        if (translated.some(function(x){ return !x || !String(x).trim(); })) return null;
+        return build(translated.map(function(x){ return String(x).trim(); }));
+      }).catch(function(){ return null; });
     }).catch(function(){ return null; });
   }
   function askGeminiArabic(kind, text, b64){
@@ -4384,7 +4423,10 @@ document.getElementById("mnav-menu").addEventListener("click", function(){
     ["Ziyarat-e-Ashura", "Tell me about Ziyarat-e-Ashura"],
     ["Fees & free trial", "What are the fees and how does the free trial work?"],
     ["Help me study better", "How can I study better? Give me study tips"],
-    ["Tell me a joke", "Tell me a joke"]
+    ["Tell me a joke", "Tell me a joke"],
+    ["Namaz kaise parhte hain?", "Namaz kaise parhte hain?"],
+    ["Khums kya hai?", "Khums kya hai?"],
+    ["Dua e Kumayl kya hai?", "Dua e Kumayl kya hai?"]
   ];
   CHIPS.forEach(function(c){
     var b = document.createElement("button");
@@ -4543,6 +4585,11 @@ document.getElementById("mnav-menu").addEventListener("click", function(){
     roman: "Voice note: Is device par koi aisi awaaz mojood nahi jo ye jawab bol sake, is liye ye yahan bol kar nahi sunaya ja sakta — upar likha hua jawab mukammal hai.",
     ar: "ملاحظة صوتية: لا يوجد على هذا الجهاز صوت يستطيع نطق هذا الجواب، فلا يمكن قراءته بصوت عالٍ هنا — والجواب المكتوب أعلاه كامل."
   };
+  var AI_MIC_NOTES = {
+    denied: { en: "Microphone permission was blocked. Please allow microphone access in your browser, or type your question.", ur: "مائیکروفون کی اجازت بند ہے۔ براہ کرم براؤزر میں مائیکروفون کی اجازت دیں، یا اپنا سوال لکھ کر بھیجیں۔", roman: "Microphone ki ijazat blocked hai. Barah-e-karam browser mein microphone ki ijazat dein, ya apna sawal type karke bhejein.", ar: "تم حظر إذن الميكروفون. يرجى السماح بالوصول إلى الميكروفون في المتصفح، أو كتابة سؤالكم بدلاً من ذلك." },
+    heard: { en: "I could not hear you. Please try the microphone again, or type your question.", ur: "آپ کی آواز سنائی نہیں دی۔ براہ کرم مائیکروفون دوبارہ آزمائیں، یا اپنا سوال لکھ کر بھیجیں۔", roman: "Aap ki awaaz sunai nahi di. Barah-e-karam microphone dobara try karein, ya apna sawal type karke bhejein.", ar: "لم أستطع سماعكم. يرجى تجربة الميكروفون مرة أخرى، أو كتابة سؤالكم." },
+    unsupported: { en: "Voice input is not supported in this browser — please type your question.", ur: "اس براؤزر میں آواز سے لکھنا دستیاب نہیں — براہ کرم اپنا سوال لکھ کر بھیجیں۔", roman: "Is browser mein voice input available nahi — barah-e-karam apna sawal type karke bhejein.", ar: "الإدخال الصوتي غير مدعوم في هذا المتصفح — يرجى كتابة سؤالكم بدلاً من ذلك." }
+  };
   var shownVoiceNotes = {};
   function noteVoiceFallback(lang, res){
     /* Honest disclosure, once per language per session, added as its
@@ -4606,12 +4653,12 @@ document.getElementById("mnav-menu").addEventListener("click", function(){
     var order = [];
     function push(code){ if (code && RECOG_LANGS[code] && order.indexOf(code) < 0) order.push(code); }
     /* Most likely first: the language the user last asked in… */
-    push(lastLang === "roman" ? "ur" : lastLang);
+    if (lastLang && lastLang !== "en") push(lastLang === "roman" ? "ur" : lastLang);
     /* …then the site's current language mode… */
     if (document.body && document.body.classList.contains("ur-mode")) push("ur");
     if (document.documentElement.lang === "ur") push("ur");
     /* …then the device / browser language… */
-    try { var nl = String(navigator.language || "").toLowerCase().split("-")[0]; push(nl); } catch (e) {}
+    try { var nl = String(navigator.language || "").toLowerCase().split("-")[0]; if (nl === "ur" || nl === "ar") push(nl); } catch (e) {}
     /* …then the academy's languages, Urdu first (its main audience),
        then English, then Arabic. English is a candidate, never a
        forced default. */
@@ -4698,7 +4745,7 @@ document.getElementById("mnav-menu").addEventListener("click", function(){
       };
       recog.onerror = function(ev){
         if (listenDone) return;
-        if (ev.error === "not-allowed" || ev.error === "service-not-allowed") { listenDone = true; setListening(false); addNote("Microphone permission was blocked. Please allow microphone access in your browser, or type your question."); return; }
+        if (ev.error === "not-allowed" || ev.error === "service-not-allowed") { listenDone = true; setListening(false); addAssistant({ paras: [AI_MIC_NOTES.denied[lastLang] || AI_MIC_NOTES.denied.en], lang: lastLang }); return; }
         if (ev.error === "no-speech" && listenIdx < listenCands.length - 1) {
           /* Nothing heard in this language — auto-try the next one. */
           listenDone = true; listenSwitching = true;
@@ -4707,7 +4754,7 @@ document.getElementById("mnav-menu").addEventListener("click", function(){
           return;
         }
         listenDone = true; setListening(false);
-        if (ev.error === "no-speech") addNote("I could not hear you. Please try the microphone again, or type your question.");
+        if (ev.error === "no-speech") addAssistant({ paras: [AI_MIC_NOTES.heard[lastLang] || AI_MIC_NOTES.heard.en], lang: lastLang });
       };
       recog.onend = function(){ if (!listenSwitching && !listenDone) setListening(false); else if (listenDone && !listenSwitching) setListening(false); };
       recog.start();
@@ -4716,7 +4763,7 @@ document.getElementById("mnav-menu").addEventListener("click", function(){
   }
   micBtn.addEventListener("click", function(){
     if (!aiSignedIn()) { paintAiGate(); return; }
-    if (!SR) { addNote("Voice input is not supported in this browser — please type your question."); return; }
+    if (!SR) { addAssistant({ paras: [AI_MIC_NOTES.unsupported[lastLang] || AI_MIC_NOTES.unsupported.en], lang: lastLang }); return; }
     if (listening) { listenDone = true; listenSwitching = false; try { if (recog) recog.stop(); } catch (e) {} setListening(false); return; }
     listenCands = recogCandidates();
     listenDone = false; listenSwitching = false;
@@ -4791,7 +4838,7 @@ document.getElementById("mnav-menu").addEventListener("click", function(){
       }, 350);
       return;
     }
-    askGemini(q, LANGS[lang].name).then(function(text){
+    askGemini(q, LANGS[lang].name, lang).then(function(text){
       removeTyping();
       var fiqhTopic = looksFiqh(q);
       var ans = text ? geminiAnswer(text, fiqhTopic, lang) : (fiqhTopic ? fallbackAnswerL(q, lang) : generalFallbackAnswer(q, lang, true));
@@ -4960,10 +5007,11 @@ document.getElementById("mnav-menu").addEventListener("click", function(){
   var LANGS = {
     en:    { name: "English",    bcp: "en-US", vp: ["en"] },
     ur:    { name: "Urdu",       bcp: "ur-PK", vp: ["ur"] },
-    roman: { name: "Roman Urdu", bcp: "ur-PK", vp: ["ur", "en"] },
+    roman: { name: "Roman Urdu", bcp: "ur-PK", vp: ["ur", "hi", "en"] },
     ar:    { name: "Arabic",     bcp: "ar-SA", vp: ["ar"] }
   };
-  var ROMAN_W = { kya:2, hai:2, hain:2, kaise:2, kese:2, batao:2, mujhe:2, namaz:2, wudu:2, wuzu:2, chahiye:2, kyun:2, kyon:2, kahan:2, kitna:2, hota:2, karna:2, seekhna:2, parhna:2, sawal:2, jawab:2, masla:2, kitab:2, hawala:2, mera:1, meri:1, aap:1, dua:1, ka:1, ki:1, ke:1, mein:1, main:1, aur:1, nahi:1, kab:1, kaun:1, kis:1, bhi:1, se:1, par:1, ne:1, ho:1, ye:1, wo:1, wala:1, gaya:1, raha:1, zaroor:1, sahib:1, bhai:1, fees:1, kitne:1 };
+  var ROMAN_W = { kya:2, kia:2, hai:2, hain:2, hy:2, he:1, hoon:2, hun:2, kaise:2, kese:2, kaisay:2, kesay:2, kaisa:2, kaisi:2, batao:2, bataein:2, batain:2, batayein:2, batayen:2, bata:1, mujhe:2, mujhy:2, mujhko:2, hamein:2, hamen:2, tumhe:2, aapko:2, namaz:2, namaaz:2, wuzu:2, wudu:2, ghusl:2, roza:2, rozay:2, roze:2, khums:2, zakat:2, zakaat:2, chahiye:2, chahye:2, chahta:2, chahti:2, chahte:2, shukria:2, shukriya:2, tarika:2, tareeqa:2, tariqa:2, kyun:2, kyon:2, kyu:2, kahan:2, kidhar:2, kitna:2, kitne:2, kitni:2, konsa:2, konsi:2, kisko:2, kiska:2, kiski:2, kisne:2, hota:2, hoti:2, hote:2, hoga:2, hogi:2, karna:2, karni:2, karne:2, karo:2, karein:2, karain:2, karen:2, krain:2, karte:2, karta:2, karti:2, krta:2, krti:2, krte:2, krna:2, kar:1, kr:1, karke:1, seekhna:2, seekhni:2, seekho:2, sikhna:2, sikhao:2, samjhao:2, samajh:2, parhna:2, parhne:2, parhte:2, parhti:2, parhta:2, parho:2, parh:1, likhna:2, likho:2, pooch:2, poocho:2, sawal:2, sawalat:2, jawab:2, masla:2, masail:2, masala:1, kitab:2, kitaab:2, hawala:2, dua:2, duas:1, baat:2, bat:2, baatein:2, bol:2, bolta:2, bolti:2, bolte:2, bolna:2, sunao:2, suno:2, dekho:2, haal:2, hal:1, theek:2, thik:2, sahi:2, sai:2, ghalat:2, galat:2, matlab:2, maqsad:2, zaroori:2, zaroorat:2, madad:2, rehnumai:2, tafseel:2, tarjuma:2, ibarat:2, alfaaz:2, jumla:1, waqt:2, din:1, raat:1, subah:1, sham:1, aaj:1, aj:1, kal:1, abhi:1, kabhi:2, phir:2, lekin:2, magar:2, agar:2, jab:2, tab:2, koi:2, kuch:2, sab:2, log:1, ghar:1, khana:2, milta:2, milti:2, mila:2, mili:2, lagta:1, lagti:2, sakta:2, sakti:2, sakte:2, jata:2, jati:2, jate:2, aata:2, aati:2, aate:2, deta:2, deti:2, leta:2, hona:2, tha:2, thi:2, the:1, hua:2, hui:2, hue:2, aaya:2, aayi:2, dain:2, dein:2, zaroor:1, bohat:2, bahut:2, thora:2, thoda:2, zyada:2, ziada:2, sirf:2, bilkul:2, shayad:2, kyunki:2, kyunke:2, isliye:2, warna:2, saath:2, sath:2, pehle:2, pehlay:2, baad:1, andar:1, bahar:1, paas:1, upar:1, neeche:1, aage:1, peeche:1, liye:2, baray:2, taraf:2, darmiyan:2, shuru:2, khatam:2, dusra:2, doosra:2, acha:2, achha:2, naraz:2, pareshan:2, mushkil:2, asan:2, aasan:2, hamesha:2, ustad:1, ustaad:1, shagird:2, madarsa:2, sahib:1, sahab:1, bhai:1, mera:1, meri:1, mere:1, hamara:2, hamari:2, tumhara:2, tumhari:2, uska:2, iska:2, unka:2, apna:2, apni:2, apne:2, aap:2, ka:1, ki:1, ke:1, mein:1, main:1, mn:2, mai:1, aur:1, nahi:2, nhi:2, ni:2, na:1, kab:1, kon:2, kaun:1, kis:1, bhi:1, se:1, par:1, ne:1, ho:1, ye:1, yeh:1, wo:1, woh:1, is:1, us:1, to:1, do:1, wala:1, wali:1, wale:1, walay:1, gaya:1, gayi:2, gaye:2, raha:1, rahi:2, rahe:2, rha:2, rhi:2, rhe:2, milega:1, deen:2, duniya:2, dunia:2, jannat:2, jahannam:2, gunah:2, gunaah:2, sawab:2, neki:2, farz:2, sunnat:2, nafil:2, makrooh:2, azan:2, adhan:2, azaan:2, sajda:2, ruku:2, sehri:2, ramzan:2, hadees:2, kuran:2, kumayl:2, arbaeen:2, chehlum:2, ghadeer:2, majlis:2, matam:2, azadari:2, nauha:2, manqabat:2, imambargah:2, jaiz:2, najaiz:2, tauba:2, istighfar:2, shukar:2, sabr:2, sabar:2, ilm:2, taleem:2, zuban:2, zubaan:2, urdu:1, quran:1, allah:1, rasool:1, nabi:1, imam:1, surah:1, ayat:1, hadith:1, fiqh:1, halal:1, haram:1, makruh:1, wajib:1, mustahab:2, sunnah:1, islam:1, masjid:1, hajj:1, umrah:1, ziyarat:1, ashura:1, muharram:1, ramadan:1, iftar:1, iftaar:1, taraweeh:1, karbala:1, hussain:1, jumma:2, eid:1, fees:1 };;
+  var EN_W = { what:2, how:2, why:2, when:2, where:2, who:2, whom:2, which:2, is:2, are:2, was:2, were:2, do:2, does:2, did:2, can:2, could:2, should:2, would:2, will:2, shall:2, may:2, might:2, must:2, the:2, please:2, tell:2, explain:2, describe:2, give:1, show:1, speak:1, say:1, me:1, my:1, mine:1, you:1, your:1, yours:1, he:1, she:1, it:1, its:1, we:1, they:1, them:1, us:1, our:1, their:1, this:1, that:1, these:1, those:1, there:1, here:1, about:1, of:1, for:1, from:1, with:1, without:1, and:1, or:1, but:1, if:1, then:1, than:1, not:1, no:1, yes:1, very:1, much:1, many:1, more:1, most:1, any:1, some:1, all:1, every:1, each:1, other:1, another:1, same:1, different:1, good:1, bad:1, big:1, small:1, new:1, old:1, first:1, last:1, one:1, two:1, day:1, today:1, tomorrow:1, yesterday:1, time:1, year:1, people:1, way:1, thing:1, things:1, world:1, life:1, place:1, week:1, problem:1, fact:1, be:1, have:1, has:1, had:1, been:1, am:1, an:1, a:1, to:1, in:1, on:1, at:1, by:1, just:1, only:1, also:1, really:1, get:1, got:1, make:1, made:1, take:1, know:1, think:1, see:1, come:1, want:1, need:1, like:1, work:1, call:1, try:1, ask:1, feel:1, keep:1, let:1, seem:1, help:1, talk:1, turn:1, start:1 };;
   var URDU_SCRIPT_W = ["ہے","ہیں","میں","کیا","اور","کے","کا","کی","سے","نہیں","آپ","یہ","وہ","بھی","پر","کو","نے","بتائیں","چاہیے","مجھے","میرا","میری","کس","کب","کیوں","کون","کیسے","پڑھیں","پڑھنا","کرتا","رہا","رہی","گا","گی","لیے","مطلب","اگر","لیکن","ہوتا","ملتا","دیں","تھا","تھی","ہوگا","ابھی","بہت","اچھا","شکریہ"];
   var ARABIC_SCRIPT_W = ["كيف","لماذا","متى","أين","الذي","التي","هذا","هذه","ذلك","عند","يجب","يمكن","هي","هو","فيه","عليه","إليه","لأن","عندما","إذا","لكن","سوف","لم","لن","ما هو","ما هي","من هو"];
   function detectLang(text){
@@ -4983,9 +5031,19 @@ document.getElementById("mnav-menu").addEventListener("click", function(){
       if (/(ما هو|ما هي|من هو|كيف|لماذا)/.test(s)) arScore += 3;
       return arScore > urScore ? "ar" : "ur";
     }
-    var score = 0;
-    s.toLowerCase().replace(/[^a-z\s]/g, " ").split(/\s+/).forEach(function(t){ if (ROMAN_W[t]) score += ROMAN_W[t]; });
-    return score >= 3 ? "roman" : "en";
+    var lowT = " " + s.toLowerCase().replace(/[^a-z\s]/g, " ") + " ";
+    var rScore = 0, eScore = 0;
+    lowT.split(/\s+/).filter(Boolean).forEach(function(t){ if (ROMAN_W[t]) rScore += ROMAN_W[t]; if (EN_W[t]) eScore += EN_W[t]; });
+    /* Roman Urdu grammar signatures — a sentence-final hai/hain, the
+       'kya … hai' question frame and Urdu object pronouns — outweigh
+       stray English words. Latin letters alone NEVER mean English:
+       Roman Urdu is scored on its own words, English on its own, and
+       the stronger language wins. */
+    if (/\b(hai|hain|hy)\s*[?.!]*$/.test(s.trim().toLowerCase())) rScore += 2;
+    if (/\bk(ya|ia)\b[^.?!]*\b(hai|hain|hy)\b/.test(lowT)) rScore += 2;
+    if (/\b(mujhe|mujhy|hamein|hamen|tumhe|tumhen|aapko)\b/.test(lowT)) rScore += 2;
+    var isRoman = (rScore >= 3 && rScore >= eScore) || (rScore >= 2 && eScore === 0);
+    return isRoman ? "roman" : "en";
   }
 
   /* ---------------- Fixed texts (per language) ---------------- */
@@ -5046,7 +5104,7 @@ document.getElementById("mnav-menu").addEventListener("click", function(){
 
   /* ---------------- Gemini via the server proxy (JSONP) ---------------- */
   var PROXY_URL = "https://script.google.com/macros/s/AKfycbw7W0yI0y7dzD2DSy1jEMApCZhwah66jjzX6R6eXEtiugE_fM0MCQ-YutZ1Gv3LhdYQBg/exec";
-  var SYS = "You are the free public AI assistant of Shia Online Quran Academy (based in Faisalabad, Pakistan; one-to-one online Quran classes worldwide; WhatsApp +92 307 4348899; founder and teacher Qari Muhammad Imran Ali). This chat is free and open to everyone with no login. You are a friendly, helpful GENERAL assistant: you chat and answer questions on ANY topic — everyday life, study and homework help, general knowledge, science, history, languages, technology, practical advice and friendly conversation — not only religion. Answer helpfully and in plain language, and NEVER refuse, deflect or redirect a question merely because it is not about fiqh; only a personal religious ruling is referred to Qari Sahib. STRICT RULES FOR RELIGIOUS QUESTIONS: (1) Never issue a personal fatwa or binding religious ruling. For Shia fiqh questions give only general educational information, and advise the user to follow their own Marja-e-Taqlid and to ask Qari Muhammad Imran Ali on WhatsApp +92 307 4348899 for personal rulings. (2) Never invent a Hadith, a Quranic verse, a book name, an author or a page number. Name a book reference only if you are certain of it; otherwise say plainly that you do not have a verified reference. (3) If you do not know something, say so honestly. (4) Always reply in the SAME language as the user's message, whatever language it is: English → English; Urdu (script) → Urdu; Roman Urdu → Roman Urdu; Arabic → Arabic; any other language → that same language. Never switch languages. (5) When the user shares Arabic text for translation: first reproduce the Arabic WITH full I'rab (tashkeel — zabar, zer, pesh, tashdeed, jazm, tanween) wherever the original lacks vowel marks, making every effort to vowel it fully; never guess an I'rab or a meaning you are unsure of — say plainly where you are unsure. Keep the answer under 300 words.";
+  var SYS = "You are the free public AI assistant of Shia Online Quran Academy (based in Faisalabad, Pakistan; one-to-one online Quran classes worldwide; WhatsApp +92 307 4348899; founder and teacher Qari Muhammad Imran Ali). This chat is free and open to everyone with no login. You are a friendly, helpful GENERAL assistant: you chat and answer questions on ANY topic — everyday life, study and homework help, general knowledge, science, history, languages, technology, practical advice and friendly conversation — not only religion. Answer helpfully and in plain language, and NEVER refuse, deflect or redirect a question merely because it is not about fiqh; only a personal religious ruling is referred to Qari Sahib. STRICT RULES FOR RELIGIOUS QUESTIONS: (1) Never issue a personal fatwa or binding religious ruling. For Shia fiqh questions give only general educational information, and advise the user to follow their own Marja-e-Taqlid and to ask Qari Muhammad Imran Ali on WhatsApp +92 307 4348899 for personal rulings. (2) Never invent a Hadith, a Quranic verse, a book name, an author or a page number. Name a book reference only if you are certain of it; otherwise say plainly that you do not have a verified reference. (3) If you do not know something, say so honestly. (4) Always reply in the SAME language as the user's message, whatever language it is: English → English; Urdu (script) → Urdu; Roman Urdu → Roman Urdu; Arabic → Arabic; any other language → that same language. Never switch languages. ROMAN URDU MEANS Urdu written in Latin/Roman letters (for example 'Namaz kaise parhte hain?' or 'Khums kya hai?'): Latin letters do NOT make a message English — if the user's words are Roman Urdu, your ENTIRE reply must be Roman Urdu in Latin letters, never English and never Urdu script, and no sentence or paragraph may be left in English. This same-language rule covers EVERY language and the WHOLE reply, in text and in voice. ACCURACY IS MANDATORY on every topic, fiqh or general: give the correct, accurate answer; if you genuinely do not know or are unsure, say so honestly in the user's language instead of guessing — never invent facts, numbers, references, Hadith, verses or rulings. (5) When the user shares Arabic text for translation: first reproduce the Arabic WITH full I'rab (tashkeel — zabar, zer, pesh, tashdeed, jazm, tanween) wherever the original lacks vowel marks, making every effort to vowel it fully; never guess an I'rab or a meaning you are unsure of — say plainly where you are unsure. Keep the answer under 300 words.";
   function extractText(data){
     if (data == null) return null;
     if (typeof data === "string") return data.trim() || null;
@@ -5087,8 +5145,15 @@ document.getElementById("mnav-menu").addEventListener("click", function(){
       document.head.appendChild(sc);
     });
   }
+  var LANG_LOCK = {
+    en: "LANGUAGE LOCK — ENGLISH: Write your ENTIRE reply in English only.",
+    ur: "LANGUAGE LOCK — URDU SCRIPT: Write your ENTIRE reply in Urdu (Urdu script) only. Do not write in English and do not write in Roman Urdu.",
+    roman: "LANGUAGE LOCK — ROMAN URDU: The user wrote in Roman Urdu — Urdu written in Latin/Roman letters (e.g. 'Namaz kaise parhte hain?', 'Khums kya hai?'). Write your ENTIRE reply in Roman Urdu only: the Urdu language in Latin letters. Do NOT write in English and do NOT use Urdu or Arabic script (names like Quran, Namaz and book names stay as they are). No paragraph may be left in English.",
+    ar: "LANGUAGE LOCK — ARABIC: Write your ENTIRE reply in Arabic only. Do not write in English or Urdu."
+  };
+  var ACCURACY_LOCK = "ACCURACY LOCK: Give the correct, accurate answer on every topic. If you genuinely do not know or are unsure, say so honestly in the same language — never invent facts, numbers, references, Hadith, verses or rulings.";
   function askAI(q, lang){
-    var prompt = SYS + "\n\nUser question: " + String(q).slice(0, 3000) + "\n\n[Instruction: reply entirely in " + LANGS[lang].name + " — the same language as the question.]";
+    var prompt = SYS + "\n\nUser question: " + String(q).slice(0, 3000) + "\n\n[" + (LANG_LOCK[lang] || LANG_LOCK.en) + " " + ACCURACY_LOCK + "]";
     return proxyCall(prompt, LANGS[lang].name, 45000);
   }
 
@@ -5187,7 +5252,7 @@ document.getElementById("mnav-menu").addEventListener("click", function(){
   function recogOrder(){
     var order = [];
     function push(c){ if (c && order.indexOf(c) < 0) order.push(c); }
-    push(lastLang === "roman" ? "ur" : lastLang);
+    if (lastLang && lastLang !== "en") push(lastLang === "roman" ? "ur" : lastLang);
     push("ur"); push("en"); push("ar");
     return order;
   }
@@ -5239,6 +5304,82 @@ document.getElementById("mnav-menu").addEventListener("click", function(){
     if (/(contact|whatsapp|phone|timing|timings|open|hours|location|where|number)/.test(low) || /رابطہ|وقت|نمبر/.test(raw) || /(اتصال|واتساب|موقع|أوقات)/.test(raw)) return { paras: CONTACT[lang], lang: lang };
     return null;
   }
+  /* ---------------- Built-in general conversation ----------------
+     General chat is answered on ANY topic, in the visitor's own
+     language — never refused and never redirected to fiqh or to Qari
+     Sahib. These built-in replies (small talk, jokes, study help,
+     simple sums, honest live-data notes) work instantly in all four
+     languages; everything else goes to the full AI via the proxy. */
+  function tryArithmetic(q){
+    var s = String(q || "")
+      .replace(/[\u0660-\u0669]/g, function(c){ return String(c.charCodeAt(0) - 0x660); })
+      .replace(/[\u06F0-\u06F9]/g, function(c){ return String(c.charCodeAt(0) - 0x6F0); })
+      .replace(/multiplied by/gi, "*").replace(/divided by/gi, "/")
+      .replace(/\bplus\b/gi, "+").replace(/\bminus\b/gi, "-").replace(/\btimes\b/gi, "*")
+      .replace(/×/g, "*").replace(/÷/g, "/");
+    var m = s.match(/(-?\d+(?:\.\d+)?)\s*([+\-*/x])\s*(-?\d+(?:\.\d+)?)/i);
+    if (!m) return null;
+    var a = parseFloat(m[1]), b = parseFloat(m[3]), op = m[2].toLowerCase() === "x" ? "*" : m[2], r;
+    if (op === "+") r = a + b; else if (op === "-") r = a - b; else if (op === "*") r = a * b;
+    else { if (b === 0) return { divZero: true }; r = a / b; }
+    if (typeof r !== "number" || !isFinite(r)) return null;
+    r = Math.round(r * 1000000) / 1000000;
+    return { a: a, b: b, op: op, r: r };
+  }
+  var FC_GEN_TXT = {
+    howru: {
+      en: "Alhamdulillah, I am well — thank you for asking! How are you? And how can I help you today — a question about the Quran and fiqh, your studies, or anything else on your mind?",
+      ur: "الحمدللہ، میں خیریت سے ہوں — پوچھنے کا شکریہ! آپ کیسے ہیں؟ اور آج میں آپ کی کیا مدد کر سکتا ہوں — قرآن و فقہ کا سوال، پڑھائی، یا کوئی بھی اور بات؟",
+      roman: "Alhamdulillah, mein khairiyat se hun — poochne ka shukria! Aap kaise hain? Aur aaj mein aap ki kya madad kar sakta hun — Quran o fiqh ka sawal, parhai, ya koi bhi aur baat?",
+      ar: "الحمد لله، أنا بخير — شكراً لسؤالك! كيف حالك أنت؟ وكيف أستطيع مساعدتك اليوم — سؤال عن القرآن والفقه، أو دراستك، أو أي موضوع آخر؟"
+    },
+    joke: {
+      en: "Here is a clean one: the teacher said, “Do your sums without using tables!” — so the student sat down on the floor to do his math. Shall I tell another, or shall we come to your question?",
+      ur: "ایک ہلکی سی بات: استاد نے کہا، ”میز (tables) استعمال کیے بغیر حساب کرو!“ — تو شاگرد زمین پر بیٹھ کر حساب کرنے لگا۔ ایک اور سناؤں، یا اپنے سوال کی طرف آئیں؟",
+      roman: "Ek halki si baat: Ustad ne kaha, 'tables use kiye baghair hisab karo!' — to shagird zameen par baith kar hisab karne laga. Ek aur sunaun, ya apne sawal ki taraf aayen?",
+      ar: "واحدة خفيفة: قال المعلم: «احسب دون استعمال الجداول!» — فجلس التلميذ على الأرض يحسب. هل تريد أخرى، أم نعود إلى سؤالك؟"
+    },
+    live: {
+      en: "That needs live information (like today's weather or the exact time), and I cannot check live data from here — your phone's weather or clock app will show it right away for your city. But tell me what you are planning, and I can help you plan for it in general terms.",
+      ur: "اس کے لیے تازہ معلومات درکار ہیں (جیسے آج کا موسم یا صحیح وقت)، اور میں یہاں سے لائیو ڈیٹا نہیں دیکھ سکتا — آپ کے فون کی موسم یا گھڑی والی ایپ آپ کے شہر کے لیے فوراً بتا دے گی۔ لیکن آپ جو منصوبہ بنا رہے ہیں وہ بتا دیں، میں عمومی طور پر اس کی منصوبہ بندی میں مدد کر دوں گا۔",
+      roman: "Is ke liye live maloomat chahiye hoti hain (jaise aaj ka mausam ya sahi waqt), aur mein yahan se live data nahi dekh sakta — aap ke phone ki weather ya clock app aap ke sheher ke liye foran bata de gi. Lekin aap jo plan bana rahe hain woh bata dein, mein aam taur par us ki planning mein madad kar dun ga.",
+      ar: "هذا يحتاج إلى معلومات مباشرة (مثل طقس اليوم أو الوقت الدقيق)، ولا أستطيع التحقق من البيانات المباشرة من هنا — سيعرض تطبيق الطقس أو الساعة في هاتفك مدينتك فوراً. لكن أخبرني بما تخطط له، وسأساعدك في التخطيط له بشكل عام."
+    },
+    identity: {
+      en: "I am the free AI assistant of Shia Online Quran Academy, shown with the photo of our founder, Qari Muhammad Imran Ali. Ask me anything — Shia fiqh with Hawala, the Holy Quran, our courses and fees — or talk to me about any other topic at all, in English, اردو, Roman Urdu or العربية, and I will always answer in your own language.",
+      ur: "میں شیعہ آن لائن قرآن اکیڈمی کا مفت AI معاون ہوں — میرے ساتھ ہمارے بانی قاری محمد عمران علی کی تصویر نظر آتی ہے۔ مجھ سے کچھ بھی پوچھیں — شیعہ فقہ حوالے کے ساتھ، قرآن مجید، ہمارے کورسز اور فیس — یا کسی بھی اور موضوع پر بات کریں، اور میں ہمیشہ آپ کی اپنی زبان میں جواب دوں گا۔",
+      roman: "Mein Shia Online Quran Academy ka free AI assistant hun — mere saath hamare founder Qari Muhammad Imran Ali ki photo nazar aati hai. Mujh se kuch bhi poochein — Shia fiqh Hawala ke saath, Quran, hamare courses aur fees — ya kisi bhi aur topic par baat karein, aur mein hamesha aap ki apni language mein jawab dun ga.",
+      ar: "أنا المساعد الذكي المجاني لأكاديمية الشيعة لتعليم القرآن عبر الإنترنت — تظهر بجانبي صورة مؤسس الأكاديمية القارئ محمد عمران علي. اسألني عن أي شيء — الفقه الشيعي مع المرجع، القرآن الكريم، دوراتنا ورسومنا — أو تحدث معي عن أي موضوع آخر، وسأجيب دائماً بلغتك نفسها."
+    }
+  };
+  var FC_GEN_CAPAB = {
+    en: ["Lots — you can talk to me about almost anything:", "• Shia fiqh, Namaz, Wudu, Duas and Ziyarat — with an honest Hawala note.", "• The academy — courses, fees, the free trial and how classes work.", "• Anything else at all — study help, homework ideas, everyday questions and general chat, in your own language, by voice or text.", "Just ask!"],
+    ur: ["بہت کچھ — آپ مجھ سے تقریباً کسی بھی موضوع پر بات کر سکتے ہیں:", "• شیعہ فقہ، نماز، وضو، دعائیں اور زیارات — دیانتدارانہ حوالہ نوٹ کے ساتھ۔", "• اکیڈمی — کورسز، فیس، مفت آزمائشی کلاس اور کلاسز کا طریقہ۔", "• اس کے علاوہ کچھ بھی — پڑھائی میں مدد، ہوم ورک کے خیالات، روزمرہ کے سوالات اور عام گفتگو، آپ کی اپنی زبان میں، آواز یا لکھ کر۔", "بس پوچھ لیں!"],
+    roman: ["Bohat kuch — aap mujh se taqreeban kisi bhi topic par baat kar sakte hain:", "• Shia fiqh, Namaz, Wudu, Duas aur Ziyarat — honest Hawala note ke saath.", "• Academy — courses, fees, free trial aur classes ka tareeqa.", "• Is ke ilawa kuch bhi — study mein madad, homework ke ideas, rozmarra ke sawalat aur aam guftagu, aap ki apni language mein, voice ya text se.", "Bas pooch lein!"],
+    ar: ["الكثير — يمكنك أن تتحدث معي عن أي موضوع تقريباً:", "• الفقه الشيعي والصلاة والوضوء والأدعية والزيارات — مع ملاحظة مرجعية صادقة.", "• الأكاديمية — الدورات والرسوم والدرس التجريبي المجاني وطريقة الدروس.", "• وأي شيء آخر — مساعدة في الدراسة، أفكار للواجب، أسئلة يومية ومحادثة عامة، بلغتك نفسها، بالصوت أو الكتابة.", "اسأل فقط!"]
+  };
+  var FC_GEN_STUDY = {
+    en: ["Happy to help you study better. A simple method that really works:", "1. Study in short, focused rounds — about 25 minutes of study, then a 5-minute break.", "2. Revise the same day: re-read today's lesson in the evening — revision within 24 hours is what makes it stick.", "3. Say it aloud and teach it: explaining a lesson in your own words is the strongest check of understanding.", "4. Keep one small daily target — for the Quran, a few lines revised every day beat one long session a week.", "Now tell me your subject or the exact lesson, and I will help you with that topic itself."],
+    ur: ["خوشی سے — پڑھائی بہتر کرنے کا ایک آسان اور آزمایا ہوا طریقہ یہ ہے:", "۱۔ مختصر اور توجہ والے ادوار میں پڑھیں — تقریباً ۲۵ منٹ پڑھائی، پھر ۵ منٹ وقفہ۔", "۲۔ اسی دن دہرائیں: آج کا سبق شام کو دوبارہ پڑھیں — ۲۴ گھنٹے کے اندر کی دہرائی ہی سبق پکا کرتی ہے۔", "۳۔ بول کر اور سکھا کر پڑھیں: سبق کو اپنے الفاظ میں سمجھانا سمجھ کی سب سے مضبوط جانچ ہے۔", "۴۔ روزانہ ایک چھوٹا ہدف رکھیں — قرآن کے لیے روز چند سطریں دہرانا ہفتے میں ایک لمبی نشست سے بہتر ہے۔", "اب اپنا مضمون یا اصل سبق بتا دیں، میں اسی موضوع میں آپ کی مدد کروں گا۔"],
+    roman: ["Khushi se — parhai behtar karne ka ek aasan aur azmaya hua tareeqa ye hai:", "1. Mukhtasar aur tawajju wale rounds mein parhein — taqreeban 25 minute parhai, phir 5 minute break.", "2. Usi din dohrayein: aaj ka sabaq shaam ko dobara parhein — 24 ghante ke andar ki dohrai hi sabaq pakka karti hai.", "3. Bol kar aur sikha kar parhein: sabaq ko apne alfaaz mein samjhana samajh ki sab se mazboot jaanch hai.", "4. Rozana ek chhota target rakhein — Quran ke liye roz chand lines dohrana hafte mein ek lambi class se behtar hai.", "Ab apna subject ya asal sabaq bata dein, mein usi topic mein aap ki madad karun ga."],
+    ar: ["بكل سرور — طريقة بسيطة ومجرّبة للدراسة الأفضل:", "١. ادرس في جولات قصيرة ومركّزة — نحو ٢٥ دقيقة دراسة ثم ٥ دقائق راحة.", "٢. راجع في اليوم نفسه: أعد قراءة درس اليوم في المساء — فالمراجعة خلال ٢٤ ساعة هي ما يثبّت الدرس.", "٣. قُلها بصوت عالٍ وعلّمها: شرح الدرس بكلماتك الخاصة هو أقوى اختبار للفهم.", "٤. اجعل هدفاً يومياً صغيراً — وللقرآن، بضعة أسطر تُراجَع كل يوم خير من جلسة طويلة أسبوعياً.", "الآن أخبرني بمادتك أو بالدرس نفسه، وسأساعدك في ذلك الموضوع بعينه."]
+  };
+  function generalAnswer(q, lang){
+    var raw = String(q || ""), low = " " + raw.toLowerCase() + " ", L = LANGS[lang] ? lang : "en";
+    var ar = tryArithmetic(raw);
+    if (ar) {
+      if (ar.divZero) return { paras: [{ en: "Dividing by zero is not possible — any number divided by 0 has no answer. Try another sum and I will work it out.", ur: "صفر سے تقسیم ممکن نہیں — کسی بھی عدد کو 0 سے تقسیم کرنے کا کوئی جواب نہیں ہوتا۔ کوئی اور حساب بتا دیں، میں حل کر دوں گا۔", roman: "Zero se taqseem mumkin nahi — kisi bhi number ko 0 se divide karne ka koi jawab nahi hota. Koi aur hisab bata dein, mein hal kar dun ga.", ar: "القسمة على صفر غير ممكنة — فأي عدد مقسوم على ٠ ليس له جواب. جرّب حساباً آخر وسأحله لك." }[L]], lang: L };
+      var expr = ar.a + " " + ar.op + " " + ar.b + " = " + ar.r;
+      return { paras: [{ en: "That works out to: " + expr + ". Give me another sum any time — or ask me anything else.", ur: "اس کا جواب ہے: " + expr + "۔ جب چاہیں ایک اور حساب دے دیں — یا کچھ اور پوچھ لیں۔", roman: "Is ka jawab hai: " + expr + ". Jab chahein ek aur hisab de dein — ya kuch aur pooch lein.", ar: "الناتج هو: " + expr + ". أعطني حساباً آخر متى شئت — أو اسألني عن أي شيء آخر." }[L]], lang: L };
+    }
+    if (/(how are you|how r u|kya haal|kaise ho|kaisay ho|kese ho|آپ کیسے|آپ کا حال|کیا حال|كيف حالك|كيف الحال)/.test(low + " " + raw)) return { paras: [FC_GEN_TXT.howru[L]], lang: L };
+    if (/(who are you|your name|what are you|tum kon ho|aap kon|aap ka naam|آپ کون|آپ کا نام|من أنت|ما اسمك)/.test(low + " " + raw)) return { paras: [FC_GEN_TXT.identity[L]], lang: L };
+    if (/(what can you do|what do you do|your abilities|kya kya kar sakte|kya kar sakte ho|آپ کیا کر سکتے|ماذا تستطيع|ما هي قدراتك)/.test(low + " " + raw)) return { paras: FC_GEN_CAPAB[L].slice(), lang: L };
+    if (/(joke|latifa|lateefa|لطیف|لطيف|نكت|مزاحیہ)/.test(low + " " + raw)) return { paras: [FC_GEN_TXT.joke[L]], lang: L };
+    if (/(weather|mausam|temperature today|what time is|current time|today'?s date|aaj ki tareekh|موسم|الطقس|الوقت الآن|تاریخ آج)/.test(low + " " + raw)) return { paras: [FC_GEN_TXT.live[L]], lang: L };
+    if (/(homework|home work|study|studies|exam|parhai|padhai|پڑھائی|امتحان|ہوم ورک|مذاكرة|دراسة|الواجب|الامتحان)/.test(low + " " + raw) && /(help|tip|tips|how|better|kaise|kis tarah|مدد|کیسے|كيف|مساعدة|أدرس|اذاكر)/.test(low + " " + raw)) return { paras: FC_GEN_STUDY[L].slice(), lang: L };
+    return null;
+  }
   function isGreeting(q){
     if (/سلام/.test(q) && q.split(/\s+/).filter(Boolean).length <= 6) return true;
     var toks = String(q).toLowerCase().replace(/[^a-z\s]/g, " ").split(/\s+/).filter(Boolean);
@@ -5271,6 +5412,12 @@ document.getElementById("mnav-menu").addEventListener("click", function(){
     if (built) {
       addAI(built);
       if (viaVoice && soundOn) speak(built.paras.join("\n"), lang);
+      return;
+    }
+    var gen = generalAnswer(q, lang);
+    if (gen) {
+      addAI(gen);
+      if (viaVoice && soundOn) speak(answerText(gen), lang);
       return;
     }
     busy = true;
@@ -5313,6 +5460,9 @@ document.getElementById("mnav-menu").addEventListener("click", function(){
     ["Courses for my child", "Which Quran courses do you offer for children?"],
     ["Help me study better", "How can I study better? Give me study tips"],
     ["Tell me a joke", "Tell me a joke"],
+    ["Namaz kaise parhte hain?", "Namaz kaise parhte hain?"],
+    ["Khums kya hai?", "Khums kya hai?"],
+    ["Dua e Kumayl kya hai?", "Dua e Kumayl kya hai?"],
     ["ما هي أصول الدين؟", "ما هي أصول الدين؟"]
   ];
   if (chipsBox) CHIPS.forEach(function(c){
