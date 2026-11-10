@@ -4714,25 +4714,97 @@ document.getElementById("mnav-menu").addEventListener("click", function(){
       };
     });
   }
-  /* Free on-device OCR (Tesseract.js, Arabic) — loaded only when needed. */
+  /* Compact, chunked Arabic → Urdu translation through the server
+     proxy — the route a photo (or a long typed passage) MUST take.
+     The older single-shot call prepended the full 2,500-character
+     system prompt plus the task text to the whole passage and sent it
+     as ONE JSONP GET URL; Arabic percent-encodes to ~6 characters per
+     letter, so a single book page pushed the request URL past what
+     the Apps Script proxy accepts, the call silently resolved to null
+     every time, and the user was left with the "send it on WhatsApp"
+     fallback — no Urdu translation ever appeared. This path instead
+     sends a SHORT task text — no system instructions attached — and
+     splits the Arabic into small chunks, one short request per chunk, so every
+     URL stays short and the translation actually comes back. It
+     resolves to a ready-to-display answer, or null only when EVERY
+     chunk failed (callers then use the verified-library fallback). */
+  var AR_CHUNK = 420, AR_MAX_CHUNKS = 8;
+  function splitArChunks(text){
+    var words = String(text || "").split(/\s+/).filter(Boolean);
+    var chunks = [], cur = "";
+    words.forEach(function(w){
+      if (cur && (cur.length + 1 + w.length) > AR_CHUNK) { chunks.push(cur); cur = w; }
+      else cur = cur ? cur + " " + w : w;
+    });
+    if (cur) chunks.push(cur);
+    return chunks;
+  }
+  function translateArabicViaProxy(text, kind){
+    var allChunks = splitArChunks(text);
+    var truncated = allChunks.length > AR_MAX_CHUNKS;
+    var chunks = allChunks.slice(0, AR_MAX_CHUNKS);
+    if (!chunks.length) return Promise.resolve(null);
+    var replies = [];
+    var chain = Promise.resolve();
+    chunks.forEach(function(chunk, i){
+      chain = chain.then(function(){
+        setAiStatus(chunks.length > 1
+          ? ("Urdu translation — part " + (i + 1) + " of " + chunks.length + "…")
+          : "Asking the full AI for I'rab and the Urdu translation…");
+        var prompt = "ARABIC TRANSLATION TASK. The text below is Arabic from a book page. Do exactly two things: (1) Write the Arabic again WITH full I'rab (tashkeel — fatha, kasra, damma, shadda, sukoon, tanween) added wherever it is missing; never guess a vowel mark you are unsure of. (2) Under the heading 'Urdu Tarjuma:' write its accurate Urdu translation. Reply in Urdu only, apart from the Arabic text itself. No introduction and no extra explanation.\n\nArabic text:\n" + chunk;
+        return geminiProxyCall(prompt, "Urdu", 45000).then(function(t){
+          replies.push(t && String(t).trim() ? String(t).trim() : null);
+        });
+      });
+    });
+    return chain.then(function(){
+      setAiStatus(null);
+      var ok = replies.filter(Boolean);
+      if (!ok.length) return null;
+      var paras = ok.slice();
+      if (ok.length < replies.length) paras.push("Note: " + (replies.length - ok.length) + " part(s) of the page could not be translated just now — please send the photo again to get the remaining part.");
+      if (truncated) paras.push("Note: the text was long, so only the first part has been translated here — please send the remaining part separately for its translation.");
+      paras.push(kind === "image"
+        ? "Note (Urdu): Ye tarjuma AI ne photo se parhi gayi Arabic ka kiya hai — OCR ya AI se ghalti mumkin hai, is liye kisi shak ki surat mein Qari Muhammad Imran Ali se WhatsApp par tasdeeq kar lein."
+        : "Note (Urdu): Ye tarjuma AI ne aap ki bheji gayi Arabic ibarat ka kiya hai — AI se ghalti mumkin hai, is liye kisi shak ki surat mein Qari Muhammad Imran Ali se WhatsApp par tasdeeq kar lein.");
+      return {
+        title: kind === "image" ? "Arabic page — I'rab & Urdu translation (AI)" : "Arabic text — I'rab & Urdu translation (AI)",
+        paras: paras,
+        hawala: "No book could be identified from the page itself, so no book name is given — a reference is never invented.",
+        wa: TEACHER_WA,
+        lang: "ur"
+      };
+    });
+  }
+
+  /* Free on-device OCR (Tesseract.js, Arabic) — loaded only when needed.
+     Both the library download and the recognition itself are raced
+     against hard timeouts: on a phone the Arabic language data is a
+     large download, and without a timeout a stalled load left the
+     photo on screen with a typing indicator forever and no answer —
+     the exact "photo sent, nothing happens" failure reported. */
   var tessPromise = null, tessWorker = null;
   function loadTesseract(){
     if (window.Tesseract) return Promise.resolve(true);
     if (!tessPromise) tessPromise = new Promise(function(res){
+      var doneLd = false;
       var sc = document.createElement("script");
       sc.src = "https://cdn.jsdelivr.net/npm/tesseract.js@5.0.5/dist/tesseract.min.js";
-      sc.onload = function(){ res(!!window.Tesseract); };
-      sc.onerror = function(){ res(false); };
+      sc.onload = function(){ if (!doneLd) { doneLd = true; res(!!window.Tesseract); } };
+      sc.onerror = function(){ if (!doneLd) { doneLd = true; res(false); } };
       document.head.appendChild(sc);
+      setTimeout(function(){ if (!doneLd) { doneLd = true; res(false); } }, 30000);
     });
     return tessPromise;
   }
   function runOcr(dataUrl){
-    return loadTesseract().then(function(ok){
+    var work = loadTesseract().then(function(ok){
       if (!ok) throw new Error("tesseract unavailable");
       if (tessWorker) return tessWorker.recognize(dataUrl);
       return window.Tesseract.createWorker("ara").then(function(w){ tessWorker = w; return w.recognize(dataUrl); });
     }).then(function(r){ return (r && r.data && r.data.text) || ""; });
+    var limit = new Promise(function(_, rej){ setTimeout(function(){ rej(new Error("ocr timeout")); }, 90000); });
+    return Promise.race([work, limit]);
   }
   function setAiStatus(txt){
     if (!txt) { status.hidden = true; return; }
@@ -5291,7 +5363,7 @@ document.getElementById("mnav-menu").addEventListener("click", function(){
        available to every signed-in user, no key in the browser. If
        the proxy does not answer, the passage is matched against the
        website's verified Arabic library instead. */
-    askGeminiArabic("text", text, null).then(function(ans){
+    translateArabicViaProxy(text, "text").then(function(ans){
       if (ans) {
         removeTyping(); addAssistant(ans);
         if (viaVoice) speak(answerText(ans), false, "ur");
@@ -5354,7 +5426,7 @@ document.getElementById("mnav-menu").addEventListener("click", function(){
       var arCount = (clean.match(/[\u0600-\u06FF]/g) || []).length;
       if (arCount < 8) { setAiStatus(null); removeTyping(); addAssistant(ocrUnreadableAnswer(false)); return; }
       setAiStatus("Asking the full AI (Gemini, via the secure server proxy) for I'rab and the Urdu translation…");
-      askGeminiArabic("text", clean, null).then(function(ans){
+      translateArabicViaProxy(clean, "image").then(function(ans){
         setAiStatus(null); removeTyping();
         if (ans) { addAssistant(ans); return; }
         matchVerifiedArabic(clean).then(function(m){
