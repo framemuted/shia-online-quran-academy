@@ -828,6 +828,9 @@ nav.main a.nav-free{font-weight:700;color:var(--emerald)}
 .acal-statusbar{display:flex;flex-wrap:wrap;gap:.5rem 1.2rem;align-items:center;margin-top:.75rem;font-size:.85rem;color:#d9dfd0}
 .acal-statusbar button{background:none;border:1px solid var(--ac-gold);color:var(--gold-bright);border-radius:999px;font:inherit;font-size:.82rem;font-weight:700;padding:.3rem .85rem;cursor:pointer;min-height:36px}
 .acal-statusbar .st{font-weight:700;color:#fff}
+.acal-wa{margin-left:auto;display:inline-flex;align-items:center;gap:.5rem;background:#1faa55;color:#fff;border:1.5px solid var(--ac-gold);border-radius:999px;font:inherit;font-weight:700;font-size:.92rem;padding:.55rem 1.1rem;cursor:pointer;min-height:44px}
+.acal-wa:hover{background:#178f47;color:#fff}
+.acal-wa svg{width:20px;height:20px;flex:none;fill:currentColor}
 @media print{.acal-shell{box-shadow:none}}
 </style>
 <meta name="google-site-verification" content="P9X8nMY1GAS7WO9imaWag6QgYxnjw-L9zU1sIIosHKg" />
@@ -976,6 +979,7 @@ nav.main a.nav-free{font-weight:700;color:var(--emerald)}
             <p class="ab-name">Shia Online <span>Quran Academy</span></p>
             <p class="ab-tag">Learn Quran • Understand Islam • Connect with Ahlul-Bayt (A.S.)</p>
           </div>
+          <button class="acal-wa" type="button" id="acal-wa-share"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M16 3C9.4 3 4 8.3 4 14.9c0 2.6.8 5 2.3 7L4.7 29l7.3-1.5a12 12 0 0 0 4 0.6c6.6 0 12-5.3 12-11.9S22.6 3 16 3Zm5.9 16.9c-.3.8-1.5 1.6-2.2 1.6-.6.1-1.3.2-4.3-.9-3.6-1.5-5.9-5.1-6.1-5.3-.2-.3-1.5-2-1.5-3.7s.9-2.6 1.2-3c.3-.3.7-.4 1-.4h.7c.2 0 .5-.1.8.6l1.1 2.7c.1.3.1.6 0 .9l-.5.7-.5.6c-.2.2-.3.4-.1.7.2.3.8 1.4 1.8 2.2 1.2 1.1 2.3 1.5 2.6 1.6.3.1.5.1.7-.1l1-1.2c.2-.3.4-.2.7-.1l2.7 1.3c.3.2.5.3.6.4 0 .1 0 .7-.2 1.2Z"/></svg>Send Today's Calendar on WhatsApp</button>
         </div>
 
         <div class="acal-grid acal-row1">
@@ -3103,6 +3107,7 @@ async function renderAdmin(){
      shows publicly on the home page. */
   + '<div class="card admin-sec"><span class="tag green">Daily Calendar</span><h3>Daily Calendar — upload the calendar picture</h3>'
   + '<p style="font-size:.92rem">Make the daily calendar as a picture yourself — design it or take a photo — then upload it here. The newest picture appears at once in the <a href="#daily-calendar">Daily Calendar section of the home page</a>, where every student, parent and visitor can see it without logging in. Uploading a new picture replaces the one on the home page; removing a picture deletes it. Only you (the admin) can upload or remove pictures. The calendar starts empty: nothing is shown until you upload the first real picture.</p>'
+  + '<p style="margin:.2rem 0 .9rem"><button class="btn btn-wa" type="button" id="dc-wa-share">Send Today\'s Calendar on WhatsApp</button> <small style="color:var(--muted)">Opens WhatsApp with today\'s live calendar — Gregorian, Hijri and Punjabi Desi dates, today\'s occasion, the Ayah and Hadith of the day and today\'s Du\'a — already written and addressed to the academy number. Just press send.</small></p>'
   + (dcDataErr ? '<p class="empty-note">The Daily Calendar data could not be loaded: '+escH(dcDataErr)+' If this is the first time, publish the Firestore rules for the Daily Calendar — see the note at the bottom of this card.</p>' : '')
   + '<form id="form-dcal"><div class="grid g2" style="gap:0 1.1rem">'
   + '<div class="field"><label for="dc-date">Date of this calendar</label><input id="dc-date" type="date" /></div>'
@@ -3386,6 +3391,8 @@ async function renderAdmin(){
     }
   });
   /* --- Daily Calendar wiring (admin only) --- */
+  const dcWaShare = document.getElementById("dc-wa-share");
+  if (dcWaShare) dcWaShare.addEventListener("click", ()=>{ if (typeof window.acalShareWhatsApp === "function") window.acalShareWhatsApp(); });
   const dcDateInput = document.getElementById("dc-date");
   if (dcDateInput) dcDateInput.value = dcDateKey();
   const dcForm = document.getElementById("form-dcal");
@@ -7699,6 +7706,60 @@ document.getElementById("mnav-menu").addEventListener("click", function(){
   if (vb) vb.addEventListener("click", () => { ACAL.showAll = !ACAL.showAll; renderEventsList(Date.now()); });
   const rf = $("acal-refresh");
   if (rf) rf.addEventListener("click", () => { ACAL.frozen = false; ACAL.dayKey = ""; update("manual"); });
+
+  /* ---------------- WHATSAPP SHARE ------------------------------------
+     Builds today's message from the SAME live values the cards show —
+     the dates are recomputed with the calendar engines above, and the
+     Ayah, Hadith and Du'a are read from the rendered cards — then opens
+     the free wa.me link addressed to the academy's WhatsApp number
+     (+92 307 4348899) with the message pre-filled, ready to send.
+     Exposed on window so the admin dashboard's Daily Calendar card
+     button can use exactly the same message. */
+  function domText(id){ const el = $(id); return el ? el.textContent.trim() : ""; }
+  function shareWhatsApp(){
+    const tz = effectiveTz();
+    const tp = partsInTz(new Date(), tz);
+    const h = hijriOfYMD(tp.y, tp.m, tp.d);
+    const pj = punjabiOf(tp.y, tp.m, tp.d);
+    const gMonth = new Intl.DateTimeFormat("en-US", { timeZone: tz, month: "long" }).format(new Date());
+    const lines = [];
+    lines.push("*Shia Online Quran Academy — Daily Calendar*");
+    lines.push("");
+    lines.push("📅 *Gregorian:* " + tp.weekday + ", " + tp.d + " " + gMonth + " " + tp.y);
+    lines.push("🌙 *Hijri:* " + h.d + " " + (HIJRI_MONTHS[h.m - 1] || "") + " " + h.y + " AH");
+    lines.push("🌾 *Punjabi Desi:* " + pj.d + " " + (PUNJABI_MONTHS[pj.m - 1] || "") + ", Samvat " + pj.y);
+    const todays = EVENTS.filter(ev => ev[0] === h.m && ev[1] === h.d);
+    if (todays.length){
+      lines.push("");
+      todays.forEach(ev => lines.push("✨ *Today's Islamic Occasion:* " + ev[2] + " (" + ev[1] + " " + (HIJRI_MONTHS[ev[0] - 1] || "") + " " + h.y + " AH)"));
+    }
+    const aAr = domText("acal-ayah-ar"), aEn = domText("acal-ayah-en"), aRef = domText("acal-ayah-ref");
+    if (aAr && aEn && aRef){
+      lines.push("");
+      lines.push("📖 *Quranic Ayah of the Day*");
+      lines.push(aAr);
+      lines.push("“" + aEn + "”");
+      lines.push(aRef);
+    }
+    const hEn = domText("acal-had-en"), hBy = domText("acal-had-by");
+    if (hEn){
+      lines.push("");
+      lines.push("📜 *Hadith of the Day*");
+      lines.push(hEn);
+      if (hBy) lines.push(hBy);
+    }
+    const duaName = domText("acal-dua-name");
+    if (duaName && duaName !== "…" && duaName !== "Today's Du'a"){
+      lines.push("");
+      lines.push("🤲 *Today's Du'a:* " + duaName);
+    }
+    lines.push("");
+    lines.push("🌐 https://shia-online-quran-academy.netlify.app/");
+    window.open("https://wa.me/923074348899?text=" + encodeURIComponent(lines.join("\n")), "_blank", "noopener");
+  }
+  window.acalShareWhatsApp = shareWhatsApp;
+  const waBtn = $("acal-wa-share");
+  if (waBtn) waBtn.addEventListener("click", shareWhatsApp);
   const evLink = $("acal-events-link");
   if (evLink) evLink.addEventListener("click", e => {
     e.preventDefault();
