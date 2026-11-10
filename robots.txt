@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://framemuted.github.io/shia-online-quran-academy/sitemap.xml
