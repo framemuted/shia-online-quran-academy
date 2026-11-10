@@ -3179,9 +3179,10 @@ async function renderAdmin(){
     tzSel.innerHTML = TZ.map(t=>'<option value="'+t[0]+'">'+t[1]+'</option>').join("");
     const cs = calSetDoc || {};
     tzSel.value = TZ.some(t=>t[0]===cs.defaultTimezone) ? cs.defaultTimezone : "Asia/Karachi";
-    document.getElementById("cs-adj").value = String(Math.max(-2, Math.min(2, parseInt(cs.hijriAdjustment, 10) || 0)));
+    const csAdjParsed = parseInt(cs.hijriAdjustment, 10);
+    document.getElementById("cs-adj").value = String(Math.max(-2, Math.min(2, isNaN(csAdjParsed) ? -1 : csAdjParsed)));
     document.getElementById("cs-status").value = ["Calculated","Tentative","Moon-sighting confirmed","Administrator verified"].indexOf(cs.hijriStatus) > -1 ? cs.hijriStatus : "Calculated";
-    document.getElementById("cs-method").value = cs.hijriMethod === "islamic-umalqura" ? "islamic-umalqura" : "islamic";
+    document.getElementById("cs-method").value = cs.hijriMethod === "islamic" ? "islamic" : "islamic-umalqura";
     document.getElementById("cs-auth").value = cs.hijriAuthority || "";
     document.getElementById("cs-auto").value = cs.autoUpdate === false ? "off" : "on";
     document.getElementById("cs-ayah").value = cs.ayahOverride || "";
@@ -7310,7 +7311,7 @@ document.getElementById("mnav-menu").addEventListener("click", function(){
 
   /* ------------------------- STATE ------------------------------------ */
   const ACAL = {
-    settings: { defaultTimezone:"", hijriAdjustment:0, hijriStatus:"Calculated", hijriMethod:"islamic", hijriAuthority:"", autoUpdate:true, ayahOverride:"", hadithOverride:"", duaOverride:"" },
+    settings: { defaultTimezone:"", hijriAdjustment:-1, hijriStatus:"Calculated", hijriMethod:"islamic-umalqura", hijriAuthority:"", autoUpdate:true, ayahOverride:"", hadithOverride:"", duaOverride:"" },
     visitorTz: null,      // manual choice on the page (this visit only)
     showAll: false,
     frozen: false,        // first successful render done while autoUpdate is off
@@ -7435,10 +7436,15 @@ document.getElementById("mnav-menu").addEventListener("click", function(){
     const stEl = $("acal-h-status");
     if (stEl) stEl.innerHTML = '<span class="pill ' + pillCls + '">' + st + "</span>";
     setText("acal-status-txt", st);
-    const methodLabel = ACAL.settings.hijriMethod === "islamic-umalqura" ? "Umm al-Qura calendar" : "Islamic civil calendar";
-    let note = methodLabel + " (calculated)";
+    let note;
+    if (ACAL.settings.hijriMethod === "islamic-umalqura"){
+      note = "Umm al-Qura calendar with Pakistan Ruet-e-Hilal moon-sighting correction";
+      if (ACAL.settings.hijriAdjustment) note += " (" + (ACAL.settings.hijriAdjustment > 0 ? "+" : "") + ACAL.settings.hijriAdjustment + " day" + (Math.abs(ACAL.settings.hijriAdjustment) > 1 ? "s" : "") + ")";
+    } else {
+      note = "Islamic civil calendar (calculated)";
+      if (ACAL.settings.hijriAdjustment) note += " · Regional correction " + (ACAL.settings.hijriAdjustment > 0 ? "+" : "") + ACAL.settings.hijriAdjustment + " day(s) applied";
+    }
     if (ACAL.settings.hijriAuthority) note += " · " + ACAL.settings.hijriAuthority;
-    if (ACAL.settings.hijriAdjustment) note += " · Regional correction " + (ACAL.settings.hijriAdjustment > 0 ? "+" : "") + ACAL.settings.hijriAdjustment + " day(s) applied";
     if (st === "Tentative") note += " · Date may shift with moon sighting";
     setText("acal-h-note", note);
     const pj = punjabiOf(tp.y, tp.m, tp.d);
