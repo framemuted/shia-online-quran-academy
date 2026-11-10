@@ -6190,10 +6190,6 @@ document.getElementById("mnav-menu").addEventListener("click", function(){
     thinking:  { en: "Thinking…", ur: "سوچ رہا ہوں…", roman: "Soch raha hun…", ar: "أفكر…" },
     speaking:  { en: "Speaking… tap the photo to interrupt", ur: "بول رہا ہوں… روکنے کے لیے تصویر دبائیں", roman: "Bol raha hun… rokne ke liye photo dabayein", ar: "أتحدث… اضغط الصورة للمقاطعة" },
     muted:     { en: "Microphone muted", ur: "مائیکروفون بند ہے", roman: "Microphone band hai", ar: "الميكروفون مكتوم" },
-    greeting:  { en: "Assalam-o-Alaikum! This is Qari Sahib's AI assistant, live on a voice call. I am listening — speak to me in any language: Urdu, Roman Urdu, English or Arabic, and I will answer you by voice, right here, like a phone call.",
-                 ur: "السلام علیکم! میں قاری صاحب کا AI معاون ہوں — لائیو آواز کی کال پر۔ میں سن رہا ہوں — کسی بھی زبان میں بات کریں: اردو، رومن اردو، انگریزی یا عربی — میں آپ کو آواز میں ہی جواب دوں گا، بالکل فون کال کی طرح۔",
-                 roman: "Assalam-o-Alaikum! Mein Qari Sahib ka AI assistant hun — live awaaz ki call par. Mein sun raha hun — kisi bhi language mein baat karein: Urdu, Roman Urdu, English ya Arabic — mein aap ko awaaz mein hi jawab dun ga, bilkul phone call ki tarah.",
-                 ar: "السلام عليكم! أنا المساعد الذكي للقارئ صاحب، في مكالمة صوتية مباشرة. أستمع إليك — تحدث معي بأي لغة: الأردية، أو الأردية بالحروف اللاتينية، أو الإنجليزية، أو العربية — وسأجيبك بالصوت هنا، تماماً كمكالمة هاتفية." },
     unreachable: { en: "Sorry — I could not reach the AI service just now. Please check your internet and speak again, or end the call and try in a moment.",
                    ur: "معذرت — اس وقت AI سروس سے رابطہ نہیں ہو سکا۔ اپنا انٹرنیٹ چیک کر کے دوبارہ بولیں، یا کال ختم کر کے تھوڑی دیر بعد کوشش کریں۔",
                    roman: "Maazrat — is waqt AI service se rabta nahi ho saka. Apna internet check karke dobara bolein, ya call khatam karke thodi dair baad try karein.",
@@ -6466,32 +6462,32 @@ document.getElementById("mnav-menu").addEventListener("click", function(){
       return;
     }
     active = true;
-    setPhase("thinking", "Starting the call…");
     var gLang = (document.body && document.body.classList.contains("ur-mode")) ? "ur" : "en";
     lastLang = gLang;
-    function beginTalk(){
+    /* LISTEN FIRST (owner's rule): the AI must NEVER speak first on a
+       call. On call start it stays completely silent — no greeting,
+       no spoken line, no transcript greeting — and goes straight
+       into the listening state ("Sun raha hun… / Listening…"). It
+       only speaks AFTER the visitor has spoken and finished, when
+       handleUser() replies by voice. */
+    function beginListening(){
       if (!active) return;
-      var greet = TXT.greeting[gLang] || TXT.greeting.en;
-      addLine("ai", greet);
-      setPhase("speaking", statusFor("speaking", gLang));
-      speak(greet, gLang, function(){
-        if (!active) return;
-        setPhase("listening", statusFor("listening", gLang));
-        startListen();
-      });
+      setPhase("listening", statusFor("listening", gLang));
+      startListen();
     }
     if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+      setPhase("listening", statusFor("listening", gLang));
       statusEl.textContent = "Asking for microphone permission — tap Allow…";
       navigator.mediaDevices.getUserMedia({ audio: true }).then(function(stream){
         try { stream.getTracks().forEach(function(t){ t.stop(); }); } catch (e) {}
-        beginTalk();
+        beginListening();
       }).catch(function(){
         if (!active) return;
         fatalMsg = true;
         setPhase("idle", "Microphone blocked");
         addLine("ai", TXT.denied[lastLang] || TXT.denied.en);
       });
-    } else beginTalk();
+    } else beginListening();
   }
   function endCall(){
     if (!active && overlay.hidden) return;
