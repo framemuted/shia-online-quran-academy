@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Redirecting to the calendar…</title>
+<script>
+// Single Page Apps for GitHub Pages — SPA fallback for Daily Calendar deep links.
+// A direct visit to /shia-online-quran-academy/daily-calendar/YYYY-MM-DD would 404 on
+// GitHub Pages (no server rewrites). This page redirects to index.html and preserves
+// the path in a "?/..." query param that the site's router reads on load.
+// (Standard spa-github-pages redirect, project page: keep the repo-name segment.)
+(function () {
+  var pathSegmentsToKeep = 1;
+  var l = window.location;
+  l.replace(
+    l.protocol + '//' + l.hostname + (l.port ? ':' + l.port : '') +
+    l.pathname.split('/').slice(0, 1 + pathSegmentsToKeep).join('/') + '/?/' +
+    l.pathname.slice(1).split('/').slice(pathSegmentsToKeep).join('/').replace(/&/g, '~and~') +
+    (l.search ? '&' + l.search.slice(1).replace(/&/g, '~and~') : '') +
+    l.hash
+  );
+})();
+</script>
+</head>
+<body>Redirecting to the calendar…</body>
+</html>
