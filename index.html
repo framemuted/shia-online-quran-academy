@@ -696,6 +696,8 @@ nav.main a.nav-free{font-weight:700;color:var(--emerald)}
 .lvc-mute{display:inline-flex;align-items:center;gap:.5rem;background:rgba(255,255,255,.1);color:#fff;border:1.5px solid rgba(255,255,255,.45);border-radius:999px;padding:.85rem 1.3rem;font:inherit;font-size:.95rem;font-weight:700;cursor:pointer;min-height:56px}
 .lvc-mute svg{width:21px;height:21px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 .lvc-mute.on{background:#fff;color:#7a1d14;border-color:#fff}
+.lvc-stop{display:inline-flex;align-items:center;gap:.5rem;background:#fff;color:#7a1d14;border:1.5px solid #fff;border-radius:999px;padding:.85rem 1.3rem;font:inherit;font-size:.95rem;font-weight:800;cursor:pointer;min-height:56px;box-shadow:0 10px 24px rgba(0,0,0,.35)}
+.lvc-stop svg{width:17px;height:17px;fill:#d92d20;stroke:none;flex:none}
 .lvc-note{font-size:.8rem;line-height:1.55;color:#cfe3d4;margin:.9rem 0 0}
 @media (prefers-reduced-motion: reduce){.lvc-ring,.lvc-ava-wrap.state-speaking img,.lvc-live-dot{animation:none}}
 /* ===== Paid Group (members-only class group) ===== */
@@ -2228,9 +2230,10 @@ nav.main a.nav-free{font-weight:700;color:var(--emerald)}
     <div class="lvc-transcript" id="lvc-transcript" aria-live="polite"></div>
     <div class="lvc-controls">
       <button type="button" class="lvc-mute" id="lvc-mute" aria-label="Mute the microphone"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a3 3 0 0 1 3 3v5a3 3 0 0 1-6 0V6a3 3 0 0 1 3-3Z"/><path d="M5 11a7 7 0 0 0 14 0"/><path d="M12 18v3"/></svg><span id="lvc-mute-txt">Mute</span></button>
+      <button type="button" class="lvc-stop" id="lvc-stop" aria-label="Stop the AI speaking"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="2"/></svg><span>Stop</span></button>
       <button type="button" class="lvc-end" id="lvc-end" aria-label="End the voice call"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 2 .7 2.9a2 2 0 0 1-.5 2.1L8 10a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.5c.9.3 1.9.6 2.9.7a2 2 0 0 1 1.7 2Z"/></svg><span>End Call</span></button>
     </div>
-    <p class="lvc-note">Talk naturally, like a phone call — speak in Urdu, Roman Urdu, English or Arabic; the AI listens, answers by voice in your language, then keeps listening. Tap Qari Sahib's photo while it is speaking to interrupt. For a personal religious ruling, always ask Qari Sahib himself on WhatsApp.</p>
+    <p class="lvc-note">Talk naturally, like a phone call — speak in Urdu, Roman Urdu, English or Arabic; the AI stays silent and listens first, waits until you finish, then answers briefly by voice in your language. While it is speaking, just start talking — or tap Stop or Qari Sahib's photo — and it stops at once and listens to you. For a personal religious ruling, always ask Qari Sahib himself on WhatsApp.</p>
   </div>
 </div>
 <div class="toast" id="toast" role="status"></div>
@@ -5775,80 +5778,113 @@ document.getElementById("mnav-menu").addEventListener("click", function(){
     return Math.min(1, ah / aw.length);
   }
   var listenCands = [], listenIdx = 0, listenSwitching = false, listenDone = false;
+  var aiSubmitTimer = null;
+  function clearAiSubmitTimer(){ if (aiSubmitTimer) { clearTimeout(aiSubmitTimer); aiSubmitTimer = null; } }
   function startListening(idx){
     listenIdx = idx;
     var cand = listenCands[idx];
     if (!cand) { setListening(false); return; }
     var code = cand, meta = RECOG_LANGS[code];
     var finalText = "", finalConf = null, settled = false;
-    try {
-      recog = new SR();
-      recog.lang = meta.bcp; /* this attempt's language — one of the auto-detect candidates, never a forced English default */
-      recog.interimResults = true;
-      try { recog.maxAlternatives = 3; } catch (e) { recog.maxAlternatives = 1; }
-      recog.onresult = function(ev){
-        var interim = "";
-        for (var i = ev.resultIndex; i < ev.results.length; i++) {
-          var r = ev.results[i];
-          if (r.isFinal) {
-            /* Pick the alternative that best fits a real language —
-               the recogniser's first guess is not always the one the
-               user actually spoke. */
-            var bestAlt = r[0], bestScore = -1;
-            for (var a = 0; a < r.length; a++) {
-              var alt = r[a]; if (!alt) continue;
-              var sc = transcriptFit(code, alt.transcript) + (alt.confidence || 0) * 0.25;
-              if (sc > bestScore) { bestScore = sc; bestAlt = alt; }
-            }
-            finalText += bestAlt.transcript;
-            if (typeof bestAlt.confidence === "number" && bestAlt.confidence > 0) finalConf = bestAlt.confidence;
-          } else interim += r[0].transcript;
-        }
-        input.value = finalText + interim;
-        if (interim || finalText) status.textContent = "🎙 " + (finalText + interim); /* live feedback: the user sees their words appear as they speak */
-        var q = finalText.trim();
-        if (!q || settled) return;
-        /* Wrong-language guard: a transcript whose words barely fit
-           the attempted language AND that the recogniser itself was
-           unsure about is almost certainly speech in another
-           language forced into this one's script — try the next
-           candidate instead of answering gibberish. */
-        var fit = transcriptFit(code, q);
-        var unsure = (finalConf !== null && finalConf < 0.65);
-        if (unsure && fit < 0.15 && listenIdx < listenCands.length - 1) {
-          settled = true; listenDone = true; listenSwitching = true;
-          try { recog.stop(); } catch (e) {}
-          setListening(true, (AI_LISTEN_TXT.listening[lastLang] || AI_LISTEN_TXT.listening.en) + " (" + RECOG_LANGS[listenCands[listenIdx + 1]].name + ")");
-          setTimeout(function(){ listenSwitching = false; if (listening) startListening(listenIdx + 1); }, 350);
-          return;
-        }
-        settled = true; listenDone = true;
-        setListening(false);
-        try { recog.stop(); } catch (e) {}
-        /* ask() runs detectLang() on the transcript, so the written
-           answer and the spoken reply both come back in the language
-           actually spoken — Urdu, English, Roman Urdu or Arabic. */
-        ask(q, true);
-      };
-      recog.onerror = function(ev){
-        if (listenDone) return;
-        if (ev.error === "not-allowed" || ev.error === "service-not-allowed") { listenDone = true; setListening(false); addAssistant({ paras: [AI_MIC_NOTES.denied[lastLang] || AI_MIC_NOTES.denied.en], lang: lastLang }); return; }
-        if (ev.error === "network" || ev.error === "audio-capture") { listenDone = true; setListening(false); addAssistant({ paras: [AI_MIC_NOTES.error[lastLang] || AI_MIC_NOTES.error.en], lang: lastLang }); return; }
-        if (ev.error === "aborted") { listenDone = true; setListening(false); return; }
-        if (ev.error === "no-speech" && listenIdx < listenCands.length - 1) {
-          /* Nothing heard in this language — auto-try the next one. */
-          listenDone = true; listenSwitching = true;
-          setListening(true, (AI_LISTEN_TXT.listening[lastLang] || AI_LISTEN_TXT.listening.en) + " (" + RECOG_LANGS[listenCands[listenIdx + 1]].name + ")");
-          setTimeout(function(){ listenSwitching = false; if (listening) startListening(listenIdx + 1); }, 350);
-          return;
-        }
-        listenDone = true; setListening(false);
-        if (ev.error === "no-speech") addAssistant({ paras: [AI_MIC_NOTES.heard[lastLang] || AI_MIC_NOTES.heard.en], lang: lastLang });
-      };
-      recog.onend = function(){ if (!listenSwitching && !listenDone) setListening(false); else if (listenDone && !listenSwitching) setListening(false); };
-      recog.start();
-      setListening(true, (AI_LISTEN_TXT.listening[lastLang] || AI_LISTEN_TXT.listening.en) + " (" + meta.name + ")");
-    } catch (e) { setListening(false); addAssistant({ paras: [AI_MIC_NOTES.error[lastLang] || AI_MIC_NOTES.error.en], lang: lastLang }); }
+    /* WAIT-FOR-THE-END RULE: a "final" result is only a phrase, not
+       the end of the user's message — they may just be pausing
+       mid-sentence. Heard finals are accumulated and sent to ask()
+       only after SILENCE of about 1.4 seconds (no new final and no
+       new interim speech). Recognition runs CONTINUOUSLY underneath
+       and is relaunched if the engine stops on its own, so a pause
+       never cuts the user off and the AI never starts answering —
+       or speaking — while the user is still talking. */
+    function submitHeard(){
+      clearAiSubmitTimer();
+      if (settled || !listening || listenDone) return;
+      var q = finalText.trim();
+      if (!q) return;
+      /* Wrong-language guard: a transcript whose words barely fit
+         the attempted language AND that the recogniser itself was
+         unsure about is almost certainly speech in another
+         language forced into this one's script — try the next
+         candidate instead of answering gibberish. */
+      var fit = transcriptFit(code, q);
+      var unsure = (finalConf !== null && finalConf < 0.65);
+      if (unsure && fit < 0.15 && listenIdx < listenCands.length - 1) {
+        settled = true; listenDone = true; listenSwitching = true;
+        try { if (recog) recog.stop(); } catch (e) {}
+        setListening(true, (AI_LISTEN_TXT.listening[lastLang] || AI_LISTEN_TXT.listening.en) + " (" + RECOG_LANGS[listenCands[listenIdx + 1]].name + ")");
+        setTimeout(function(){ listenSwitching = false; if (listening) startListening(listenIdx + 1); }, 350);
+        return;
+      }
+      settled = true; listenDone = true;
+      setListening(false);
+      try { if (recog) recog.stop(); } catch (e) {}
+      /* ask() runs detectLang() on the transcript, so the written
+         answer and the spoken reply both come back in the language
+         actually spoken — Urdu, English, Roman Urdu or Arabic. */
+      ask(q, true);
+    }
+    function armAiSubmit(){
+      clearAiSubmitTimer();
+      aiSubmitTimer = setTimeout(submitHeard, 1400);
+    }
+    function launch(){
+      try {
+        recog = new SR();
+        recog.lang = meta.bcp; /* this attempt's language — one of the auto-detect candidates, never a forced English default */
+        try { recog.continuous = true; } catch (e) {}
+        recog.interimResults = true;
+        try { recog.maxAlternatives = 3; } catch (e) { recog.maxAlternatives = 1; }
+        recog.onresult = function(ev){
+          if (settled) return;
+          var interim = "";
+          for (var i = ev.resultIndex; i < ev.results.length; i++) {
+            var r = ev.results[i];
+            if (r.isFinal) {
+              /* Pick the alternative that best fits a real language —
+                 the recogniser's first guess is not always the one the
+                 user actually spoke. */
+              var bestAlt = r[0], bestScore = -1;
+              for (var a = 0; a < r.length; a++) {
+                var alt = r[a]; if (!alt) continue;
+                var sc = transcriptFit(code, alt.transcript) + (alt.confidence || 0) * 0.25;
+                if (sc > bestScore) { bestScore = sc; bestAlt = alt; }
+              }
+              finalText += bestAlt.transcript;
+              if (typeof bestAlt.confidence === "number" && bestAlt.confidence > 0) finalConf = bestAlt.confidence;
+            } else interim += r[0].transcript;
+          }
+          input.value = finalText + interim;
+          if (interim || finalText) status.textContent = "🎙 " + (finalText + interim); /* live feedback: the user sees their words appear as they speak */
+          /* Any speech activity — a new phrase OR still-arriving
+             interim words — pushes the silence deadline out. Only
+             real silence after the last word sends the message. */
+          if (finalText.trim()) armAiSubmit();
+        };
+        recog.onerror = function(ev){
+          if (listenDone || settled) return;
+          if ((ev.error === "no-speech" || ev.error === "nomatch") && finalText.trim()) return; /* words already heard: the silence timer will send them */
+          clearAiSubmitTimer();
+          if (ev.error === "not-allowed" || ev.error === "service-not-allowed") { listenDone = true; setListening(false); addAssistant({ paras: [AI_MIC_NOTES.denied[lastLang] || AI_MIC_NOTES.denied.en], lang: lastLang }); return; }
+          if (ev.error === "network" || ev.error === "audio-capture") { listenDone = true; setListening(false); addAssistant({ paras: [AI_MIC_NOTES.error[lastLang] || AI_MIC_NOTES.error.en], lang: lastLang }); return; }
+          if (ev.error === "aborted") { listenDone = true; setListening(false); return; }
+          if (ev.error === "no-speech" && listenIdx < listenCands.length - 1) {
+            /* Nothing heard in this language — auto-try the next one. */
+            listenDone = true; listenSwitching = true;
+            setListening(true, (AI_LISTEN_TXT.listening[lastLang] || AI_LISTEN_TXT.listening.en) + " (" + RECOG_LANGS[listenCands[listenIdx + 1]].name + ")");
+            setTimeout(function(){ listenSwitching = false; if (listening) startListening(listenIdx + 1); }, 350);
+            return;
+          }
+          listenDone = true; setListening(false);
+          if (ev.error === "no-speech") addAssistant({ paras: [AI_MIC_NOTES.heard[lastLang] || AI_MIC_NOTES.heard.en], lang: lastLang });
+        };
+        recog.onend = function(){
+          if (settled || listenSwitching || listenDone) return;
+          if (finalText.trim() && listening) { launch(); return; } /* engine stopped mid-turn: keep capturing until the silence window closes */
+          if (!listenSwitching && !listenDone) setListening(false);
+        };
+        recog.start();
+        setListening(true, (AI_LISTEN_TXT.listening[lastLang] || AI_LISTEN_TXT.listening.en) + " (" + meta.name + ")");
+      } catch (e) { setListening(false); addAssistant({ paras: [AI_MIC_NOTES.error[lastLang] || AI_MIC_NOTES.error.en], lang: lastLang }); }
+    }
+    launch();
   }
   /* Ask the browser for the microphone FIRST via getUserMedia: this
      forces the permission prompt on Android Chrome, proves a working
@@ -5858,6 +5894,9 @@ document.getElementById("mnav-menu").addEventListener("click", function(){
   function beginListening(){
     listenCands = recogCandidates();
     listenDone = false; listenSwitching = false;
+    clearAiSubmitTimer();
+    /* Starting to listen always silences the AI first — the user
+       taking the mic is a barge-in: it never talks over them. */
     if ("speechSynthesis" in window) { try { window.speechSynthesis.cancel(); } catch (e) {} }
     if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
       setListening(true, AI_LISTEN_TXT.asking[lastLang] || AI_LISTEN_TXT.asking.en);
@@ -5876,21 +5915,33 @@ document.getElementById("mnav-menu").addEventListener("click", function(){
   micBtn.addEventListener("click", function(){
     if (!aiSignedIn()) { paintAiGate(); return; }
     if (!SR) { addAssistant({ paras: [AI_MIC_NOTES.unsupported[lastLang] || AI_MIC_NOTES.unsupported.en], lang: lastLang }); return; }
-    if (listening) { listenDone = true; listenSwitching = false; try { if (recog) recog.stop(); } catch (e) {} setListening(false); return; }
+    if (listening) { listenDone = true; listenSwitching = false; clearAiSubmitTimer(); try { if (recog) recog.stop(); } catch (e) {} setListening(false); return; }
     beginListening();
   });
 
-  /* ---------------- Ask flow ---------------- */
+  /* ---------------- Ask flow ----------------
+     ONE QUESTION, ONE ANSWER: every ask() takes a sequence number.
+     If a newer question is asked while an earlier one is still
+     being answered (a double-tap, a chip plus a voice message, a
+     second question sent quickly), the earlier answer is dropped
+     when it arrives — it is never shown and never spoken — so the
+     assistant can never send extra, repeated or overlapping
+     messages, and never starts speaking over the user. Starting a
+     new question also silences any reply still being spoken. */
+  var askSeq = 0;
   function ask(q, viaVoice){
     q = String(q || "").trim();
     if (!q) return;
     if (!aiSignedIn()) { paintAiGate(); if (!opened) setOpen(true); return; }
     if (!opened) setOpen(true);
+    var myAsk = ++askSeq;
+    if ("speechSynthesis" in window) { try { window.speechSynthesis.cancel(); } catch (e) {} }
     var lang = detectLang(q).code;
     lastLang = lang;
     if (/سلام/.test(q) && q.split(/\s+/).filter(Boolean).length <= 6 && /[\u0600-\u06FF]/.test(q)) {
       addUserMsg(q); input.value = ""; addTyping();
       setTimeout(function(){
+        if (myAsk !== askSeq) { removeTyping(); return; }
         removeTyping();
         var gAns = localizeAnswer(GREETING, lang);
         addAssistant(gAns);
@@ -5898,7 +5949,7 @@ document.getElementById("mnav-menu").addEventListener("click", function(){
       }, 300);
       return;
     }
-    if (isArabicPassage(q)) { askArabicText(q, lang, viaVoice); return; }
+    if (isArabicPassage(q)) { askArabicText(q, lang, viaVoice, myAsk); return; }
     addUserMsg(q);
     input.value = "";
     addTyping();
@@ -5913,6 +5964,7 @@ document.getElementById("mnav-menu").addEventListener("click", function(){
         rawAns.lang = lang;
         if (lang === "ur" && rawAns.hawala) rawAns.hawala = urSmart(rawAns.hawala);
         geminiTranslate(rawAns, lang).then(function(tAns){
+          if (myAsk !== askSeq) { removeTyping(); return; }
           removeTyping();
           var ans = tAns || localizeAnswer(local, lang);
           addAssistant(ans);
@@ -5920,6 +5972,7 @@ document.getElementById("mnav-menu").addEventListener("click", function(){
         });
       } else {
         setTimeout(function(){
+          if (myAsk !== askSeq) { removeTyping(); return; }
           removeTyping();
           var ans = localizeAnswer(local, lang);
           addAssistant(ans);
@@ -5942,6 +5995,7 @@ document.getElementById("mnav-menu").addEventListener("click", function(){
     var gen = generalIntentAnswer(q, lang);
     if (gen) {
       setTimeout(function(){
+        if (myAsk !== askSeq) { removeTyping(); return; }
         removeTyping();
         addAssistant(gen);
         if (viaVoice) speak(answerText(gen), false, lang);
@@ -5949,6 +6003,7 @@ document.getElementById("mnav-menu").addEventListener("click", function(){
       return;
     }
     askGemini(q, LANGS[lang].name, lang).then(function(text){
+      if (myAsk !== askSeq) { removeTyping(); return; }
       removeTyping();
       var fiqhTopic = looksFiqh(q);
       var ans = text ? geminiAnswer(text, fiqhTopic, lang) : (fiqhTopic ? fallbackAnswerL(q, lang) : generalFallbackAnswer(q, lang, true));
@@ -5960,7 +6015,7 @@ document.getElementById("mnav-menu").addEventListener("click", function(){
   form.addEventListener("submit", function(e){ e.preventDefault(); ask(input.value, false); });
 
   /* ---------------- Arabic text & photo flows (I'rab + Urdu) ---------------- */
-  function askArabicText(text, lang, viaVoice){
+  function askArabicText(text, lang, viaVoice, myAsk){
     addUserMsg(text);
     input.value = "";
     addTyping();
@@ -5969,12 +6024,14 @@ document.getElementById("mnav-menu").addEventListener("click", function(){
        the proxy does not answer, the passage is matched against the
        website's verified Arabic library instead. */
     translateArabicViaProxy(text, "text").then(function(ans){
+      if (typeof myAsk === "number" && myAsk !== askSeq) { removeTyping(); return; } /* superseded by a newer question */
       if (ans) {
         removeTyping(); addAssistant(ans);
         if (viaVoice) speak(answerText(ans), false, "ur");
         return;
       }
       matchVerifiedArabic(text).then(function(m){
+        if (typeof myAsk === "number" && myAsk !== askSeq) { removeTyping(); return; }
         removeTyping();
         addAssistant(m ? verifiedArabicAnswer(m, "typed", null, lang, true) : noMatchArabicAnswer("typed", lang, null, true));
       });
@@ -6386,6 +6443,8 @@ document.getElementById("mnav-menu").addEventListener("click", function(){
   /* ---------------- Listening (auto-detect spoken language) ---------------- */
   var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
   var recog = null, listening = false, listenCands = [], attemptSeq = 0, fcSessionMsg = false;
+  var fcSubmitTimer = null;
+  function clearFcSubmitTimer(){ if (fcSubmitTimer) { clearTimeout(fcSubmitTimer); fcSubmitTimer = null; } }
   var RECOG_BCP = { ur: "ur-PK", en: "en-US", ar: "ar-SA" };
   var RECOG_NAME = { ur: "Urdu", en: "English", ar: "Arabic" };
   if (!SR) { micBtn.style.display = "none"; var cap = document.querySelector(".fc-voice-cap"); if (cap) cap.style.display = "none"; }
@@ -6406,36 +6465,67 @@ document.getElementById("mnav-menu").addEventListener("click", function(){
     var code = listenCands[idx];
     var my = ++attemptSeq;
     var gotFinal = false;
-    try { recog = new SR(); } catch (e) { setListening(false); addAI({ paras: [VOICE_NOSUPPORT[lastLang] || VOICE_NOSUPPORT.en], lang: lastLang }); return; }
-    recog.lang = RECOG_BCP[code];
-    recog.interimResults = true;
-    recog.maxAlternatives = 1;
-    recog.onresult = function(ev){
-      if (my !== attemptSeq) return;
-      var interim = "", final = "";
-      for (var i = ev.resultIndex; i < ev.results.length; i++) {
-        if (ev.results[i].isFinal) final += ev.results[i][0].transcript; else interim += ev.results[i][0].transcript;
-      }
-      if (interim) setListening(true, "🎙 " + interim); /* live feedback: your words appear as you speak */
-      if (final) { gotFinal = true; attemptSeq++; try { recog.stop(); } catch (e) {} setListening(false); ask(final, true); }
-    };
-    recog.onerror = function(ev){
+    var accFinal = "";
+    /* WAIT-FOR-THE-END RULE: a "final" result is only a phrase, not
+       the end of the visitor's message — they may be pausing
+       mid-sentence. Phrases are accumulated and sent to ask() only
+       after about 1.4 seconds of real silence (no new final and no
+       new interim speech). Recognition runs continuously and is
+       relaunched if the engine stops on its own, so a pause never
+       cuts the visitor off and the AI never starts answering — or
+       speaking its reply — while the visitor is still talking. */
+    function submitHeard(){
+      clearFcSubmitTimer();
       if (my !== attemptSeq || gotFinal) return;
-      if ((ev.error === "no-speech" || ev.error === "nomatch" || ev.error === "language-not-supported") && idx < listenCands.length - 1) { startListen(idx + 1); return; }
-      attemptSeq++; /* invalidate onend so it cannot restart listening or report twice */
+      var q = accFinal.trim();
+      if (!q) return;
+      gotFinal = true; attemptSeq++;
+      try { if (recog) recog.stop(); } catch (e) {}
       setListening(false);
-      if (fcSessionMsg) return;
-      if (ev.error === "not-allowed" || ev.error === "service-not-allowed") { fcSessionMsg = true; addAI({ paras: [MIC_DENIED[lastLang] || MIC_DENIED.en], lang: lastLang }); }
-      else if (ev.error === "network" || ev.error === "audio-capture") { fcSessionMsg = true; addAI({ paras: [MIC_ERROR[lastLang] || MIC_ERROR.en], lang: lastLang }); }
-      else if (ev.error === "no-speech" || ev.error === "nomatch") { fcSessionMsg = true; addAI({ paras: [MIC_HEARD[lastLang] || MIC_HEARD.en], lang: lastLang }); }
-    };
-    recog.onend = function(){
-      if (my !== attemptSeq || gotFinal) return;
-      if (idx < listenCands.length - 1) startListen(idx + 1);
-      else { setListening(false); if (!fcSessionMsg) { fcSessionMsg = true; addAI({ paras: [MIC_HEARD[lastLang] || MIC_HEARD.en], lang: lastLang }); } }
-    };
-    setListening(true, (FC_LISTEN_TXT.listening[lastLang] || FC_LISTEN_TXT.listening.en) + " (" + RECOG_NAME[code] + ")");
-    try { recog.start(); } catch (e) { if (idx < listenCands.length - 1) startListen(idx + 1); else { setListening(false); if (!fcSessionMsg) { fcSessionMsg = true; addAI({ paras: [MIC_ERROR[lastLang] || MIC_ERROR.en], lang: lastLang }); } } }
+      ask(q, true);
+    }
+    function armFcSubmit(){
+      clearFcSubmitTimer();
+      fcSubmitTimer = setTimeout(submitHeard, 1400);
+    }
+    function launch(){
+      try { recog = new SR(); } catch (e) { setListening(false); addAI({ paras: [VOICE_NOSUPPORT[lastLang] || VOICE_NOSUPPORT.en], lang: lastLang }); return; }
+      recog.lang = RECOG_BCP[code];
+      try { recog.continuous = true; } catch (e) {}
+      recog.interimResults = true;
+      recog.maxAlternatives = 1;
+      recog.onresult = function(ev){
+        if (my !== attemptSeq || gotFinal) return;
+        var interim = "", final = "";
+        for (var i = ev.resultIndex; i < ev.results.length; i++) {
+          if (ev.results[i].isFinal) final += ev.results[i][0].transcript; else interim += ev.results[i][0].transcript;
+        }
+        if (final.trim()) accFinal = accFinal ? (accFinal + " " + final.trim()) : final.trim();
+        if (interim || accFinal) setListening(true, "🎙 " + (accFinal ? accFinal + " " : "") + interim); /* live feedback: your words appear as you speak */
+        if (accFinal) armFcSubmit(); /* speech activity pushes the silence deadline out */
+      };
+      recog.onerror = function(ev){
+        if (my !== attemptSeq || gotFinal) return;
+        if ((ev.error === "no-speech" || ev.error === "nomatch") && accFinal.trim()) return; /* words already heard: the silence timer will send them */
+        if ((ev.error === "no-speech" || ev.error === "nomatch" || ev.error === "language-not-supported") && idx < listenCands.length - 1) { clearFcSubmitTimer(); startListen(idx + 1); return; }
+        clearFcSubmitTimer();
+        attemptSeq++; /* invalidate onend so it cannot restart listening or report twice */
+        setListening(false);
+        if (fcSessionMsg) return;
+        if (ev.error === "not-allowed" || ev.error === "service-not-allowed") { fcSessionMsg = true; addAI({ paras: [MIC_DENIED[lastLang] || MIC_DENIED.en], lang: lastLang }); }
+        else if (ev.error === "network" || ev.error === "audio-capture") { fcSessionMsg = true; addAI({ paras: [MIC_ERROR[lastLang] || MIC_ERROR.en], lang: lastLang }); }
+        else if (ev.error === "no-speech" || ev.error === "nomatch") { fcSessionMsg = true; addAI({ paras: [MIC_HEARD[lastLang] || MIC_HEARD.en], lang: lastLang }); }
+      };
+      recog.onend = function(){
+        if (my !== attemptSeq || gotFinal) return;
+        if (accFinal.trim()) { launch(); return; } /* engine stopped mid-turn: keep capturing until the silence window closes */
+        if (idx < listenCands.length - 1) startListen(idx + 1);
+        else { setListening(false); if (!fcSessionMsg) { fcSessionMsg = true; addAI({ paras: [MIC_HEARD[lastLang] || MIC_HEARD.en], lang: lastLang }); } }
+      };
+      setListening(true, (FC_LISTEN_TXT.listening[lastLang] || FC_LISTEN_TXT.listening.en) + " (" + RECOG_NAME[code] + ")");
+      try { recog.start(); } catch (e) { if (idx < listenCands.length - 1) startListen(idx + 1); else { setListening(false); if (!fcSessionMsg) { fcSessionMsg = true; addAI({ paras: [MIC_ERROR[lastLang] || MIC_ERROR.en], lang: lastLang }); } } }
+    }
+    launch();
   }
   /* Ask the browser for the microphone FIRST via getUserMedia: this
      forces the permission prompt on Android Chrome, proves a working
@@ -6445,6 +6535,9 @@ document.getElementById("mnav-menu").addEventListener("click", function(){
   function beginFcListening(){
     listenCands = recogOrder();
     fcSessionMsg = false;
+    clearFcSubmitTimer();
+    /* Starting to listen always silences the AI first — the visitor
+       taking the mic is a barge-in: it never talks over them. */
     if ("speechSynthesis" in window) { try { window.speechSynthesis.cancel(); } catch (e) {} }
     if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
       setListening(true, FC_LISTEN_TXT.asking[lastLang] || FC_LISTEN_TXT.asking.en);
@@ -6462,7 +6555,7 @@ document.getElementById("mnav-menu").addEventListener("click", function(){
   }
   micBtn.addEventListener("click", function(){
     if (!SR) { addAI({ paras: [VOICE_NOSUPPORT[lastLang] || VOICE_NOSUPPORT.en], lang: lastLang }); return; }
-    if (listening) { attemptSeq++; try { if (recog) recog.stop(); } catch (e) {} setListening(false); return; }
+    if (listening) { attemptSeq++; clearFcSubmitTimer(); try { if (recog) recog.stop(); } catch (e) {} setListening(false); return; }
     beginFcListening();
   });
 
@@ -6565,6 +6658,12 @@ document.getElementById("mnav-menu").addEventListener("click", function(){
   function ask(q, viaVoice){
     q = String(q || "").trim();
     if (!q || busy) return;
+    /* A new question silences any reply still being spoken at once —
+       the AI never talks over the visitor's next question. (busy
+       above already guarantees one question, one answer: a second
+       question sent while one is being answered is not queued, so
+       no extra or repeated reply can ever appear.) */
+    if ("speechSynthesis" in window) { try { window.speechSynthesis.cancel(); } catch (e) {} }
     var lang = detectLang(q);
     lastLang = lang;
     addUser(q);
@@ -6848,7 +6947,7 @@ document.getElementById("mnav-menu").addEventListener("click", function(){
   var muteTxt = document.getElementById("lvc-mute-txt");
   var endBtn = document.getElementById("lvc-end");
   var PROXY_URL = "https://script.google.com/macros/s/AKfycbxvvsVBP4AtEd0r6x8snZMP11E0WfqEiYLApPfzy66DqYb1HDUZNxZ6Q_FcXM4qG2Oc8g/exec";
-  var SYS = "You are the AI Assistant of Shia Online Quran Academy, speaking LIVE on a voice call with the visitor, like the voice mode of ChatGPT. You are a friendly, helpful GENERAL assistant: chat and answer on ANY topic — everyday life, study help, general knowledge, science, history, languages, technology, practical advice and friendly conversation — not only religion; only a personal religious ruling is referred to Qari Muhammad Imran Ali on WhatsApp +92 307 4348899. STRICT RULES FOR RELIGIOUS QUESTIONS: (1) Never issue a personal fatwa or binding ruling; for Shia fiqh give general educational information only and advise following one's own Marja-e-Taqlid. (2) Never invent a Hadith, a Quranic verse, a book name, an author or a page number; name a reference only if you are certain of it, otherwise say plainly you have no verified reference. (3) If you do not know, say so honestly — never invent facts. (4) ALWAYS reply in the SAME language as the visitor's last message: English → English; Urdu script → Urdu script; Roman Urdu (Urdu written in Latin letters, e.g. 'Namaz kaise parhte hain?') → Roman Urdu in Latin letters, never English and never Urdu script; Arabic → Arabic. Never switch languages. VOICE STYLE: this answer will be SPOKEN ALOUD, so keep it short and conversational — usually 2 to 5 short sentences, plain spoken words, no lists, no headings, no markdown, no links, no emojis. End naturally, as the call continues and the visitor can reply.";
+  var SYS = "You are the AI Assistant of Shia Online Quran Academy, speaking LIVE on a voice call with the visitor, like the voice mode of ChatGPT. You are a friendly, helpful GENERAL assistant: chat and answer on ANY topic — everyday life, study help, general knowledge, science, history, languages, technology, practical advice and friendly conversation — not only religion; only a personal religious ruling is referred to Qari Muhammad Imran Ali on WhatsApp +92 307 4348899. STRICT RULES FOR RELIGIOUS QUESTIONS: (1) Never issue a personal fatwa or binding ruling; for Shia fiqh give general educational information only and advise following one's own Marja-e-Taqlid. (2) Never invent a Hadith, a Quranic verse, a book name, an author or a page number; name a reference only if you are certain of it, otherwise say plainly you have no verified reference. (3) If you do not know, say so honestly — never invent facts. (4) ALWAYS reply in the SAME language as the visitor's last message: English → English; Urdu script → Urdu script; Roman Urdu (Urdu written in Latin letters, e.g. 'Namaz kaise parhte hain?') → Roman Urdu in Latin letters, never English and never Urdu script; Arabic → Arabic. Never switch languages. VOICE STYLE: this answer will be SPOKEN ALOUD. Answer ONLY what the visitor asked — nothing extra: 1 to 3 short sentences at most, plain spoken words, no greeting, no introduction, no self-description, never repeat the visitor's question back, no offers of further help, no lists, no headings, no markdown, no links, no emojis. End naturally, as the call continues and the visitor can reply.";
   var LANG_LOCK = {
     en: "LANGUAGE LOCK — ENGLISH: Speak your ENTIRE reply in English only.",
     ur: "LANGUAGE LOCK — URDU SCRIPT: Speak your ENTIRE reply in Urdu (Urdu script) only.",
@@ -7016,6 +7115,13 @@ document.getElementById("mnav-menu").addEventListener("click", function(){
   var active = false, phase = "idle", muted = false, recog = null;
   var lastLang = "en", history = [], callTimer = null, callSecs = 0;
   var listenAttempt = 0, turnSeq = 0, interimEl = null, fatalMsg = false;
+  /* Turn-taking state: accumulated speech of the visitor's current
+     turn, the silence deadline timer, the AI's last spoken answer
+     (echo guard) and the visitor's last accepted line (repeat
+     guard). */
+  var pendingFinal = "", pendingInterim = "", submitTimer = null;
+  var lastAiText = "", lastUserText = "", lastUserAt = 0;
+  var bargeRecog = null, bargeTimer = null;
   function setPhase(p, statusText){
     phase = p;
     avaWrap.className = "lvc-ava-wrap" + (p === "listening" ? " state-listening" : p === "speaking" ? " state-speaking" : p === "thinking" ? " state-thinking" : "");
@@ -7046,52 +7152,189 @@ document.getElementById("mnav-menu").addEventListener("click", function(){
     return order;
   }
   function stopRecog(){ if (recog) { try { recog.onresult = null; recog.onerror = null; recog.onend = null; recog.abort(); } catch (e) {} recog = null; } }
-  function startListen(){
+  /* ---------- Turn-taking helpers ----------
+     WAIT-FOR-THE-END RULE: a "final" recognition result is NOT the
+     end of the visitor's turn. Phones emit a final for each phrase
+     while the visitor is still mid-sentence (a breath, a pause to
+     think). Finals are therefore ACCUMULATED, and the turn passes
+     to the AI only after SILENCE_MS of real silence — no final and
+     no interim speech — counted from the last speech heard. The
+     recogniser is quietly restarted underneath, so a pause never
+     cuts the visitor off and the AI never talks over them. */
+  var SILENCE_MS = 1500;
+  function normText(s){ return String(s || "").toLowerCase().replace(/[^a-z0-9\u0600-\u06FF\s]+/gi, " ").replace(/\s+/g, " ").trim(); }
+  function mergeText(a, b){
+    a = String(a || "").trim(); b = String(b || "").trim();
+    if (!a) return b; if (!b) return a;
+    if (b.indexOf(a) === 0) return b;
+    if (a.indexOf(b) === 0) return a;
+    var max = Math.min(a.length, b.length), k = 0;
+    for (var i = 1; i <= max; i++) { if (a.slice(a.length - i) === b.slice(0, i)) k = i; }
+    return k > 3 ? (a + b.slice(k)) : (a + " " + b);
+  }
+  function echoShare(text, spoken){
+    /* How much of `text` is just `spoken` repeated back — used to
+       recognise the AI's own voice coming out of the phone speaker
+       and back into the microphone. */
+    var t = normText(text), a = normText(spoken);
+    if (!t || !a) return 0;
+    if (t.length >= 6 && a.indexOf(t) > -1) return 1;
+    var words = t.split(" "), hit = 0, counted = 0;
+    words.forEach(function(w){ if (w.length > 2) { counted++; if (a.indexOf(w) > -1) hit++; } });
+    return counted ? hit / counted : 0;
+  }
+  function isEchoOfAi(text){
+    /* NEVER-LOOP GUARD: if what the microphone "heard" is (almost)
+       the AI's own last spoken answer, it is speaker echo, not the
+       visitor — it must never be answered, or the AI would talk to
+       itself in a loop. */
+    if (!lastAiText) return false;
+    var t = normText(text);
+    if (t.length < 8) return false;
+    return echoShare(text, lastAiText) >= 0.85;
+  }
+  function clearSubmitTimer(){ if (submitTimer) { clearTimeout(submitTimer); submitTimer = null; } }
+  function armSubmitTimer(myTurn){
+    clearSubmitTimer();
+    submitTimer = setTimeout(function(){
+      submitTimer = null;
+      if (!active || myTurn !== turnSeq || phase !== "listening" || muted || fatalMsg) return;
+      var text = (pendingFinal || pendingInterim || "").trim();
+      pendingFinal = ""; pendingInterim = "";
+      setInterim("");
+      if (!text) { startListen(); return; }
+      if (isEchoOfAi(text)) { startListen(); return; } /* echo: keep listening, say nothing */
+      handleUser(text);
+    }, SILENCE_MS);
+  }
+  function stopBargeRecog(){
+    if (bargeTimer) { clearTimeout(bargeTimer); bargeTimer = null; }
+    if (bargeRecog) { try { bargeRecog.onresult = null; bargeRecog.onerror = null; bargeRecog.onend = null; bargeRecog.abort(); } catch (e) {} bargeRecog = null; }
+  }
+  function startBargeWatch(spokenText, myTurn){
+    /* BARGE-IN: while the AI is speaking, a light recogniser listens
+       ONLY for the visitor's voice. The moment the visitor starts
+       talking — real words, not the AI's own speaker echo — the AI
+       stops mid-sentence and the call switches to listening, with
+       what the visitor just said kept as the start of their turn. */
+    stopBargeRecog();
+    if (!SR) return;
+    bargeTimer = setTimeout(function(){
+      bargeTimer = null;
+      if (!active || myTurn !== turnSeq || phase !== "speaking" || muted) return;
+      var br = null;
+      try { br = new SR(); } catch (e) { return; }
+      bargeRecog = br;
+      br.lang = RECOG_BCP[(LANGS[lastLang] || LANGS.en).recog] || "en-US";
+      br.interimResults = true;
+      br.maxAlternatives = 1;
+      br.onresult = function(ev){
+        if (!active || myTurn !== turnSeq || phase !== "speaking" || muted) return;
+        var heard = "";
+        for (var i = ev.resultIndex; i < ev.results.length; i++) heard += ev.results[i][0].transcript;
+        heard = heard.trim();
+        if (heard.replace(/\s+/g, "").length < 3) return; /* a cough or noise is not speech */
+        if (echoShare(heard, spokenText) >= 0.8) return; /* the AI's own voice from the speaker */
+        turnSeq++;
+        var seed = heard;
+        stopBargeRecog();
+        stopSpeaking();
+        setInterim("");
+        setPhase("listening", statusFor("listening", lastLang));
+        startListen(seed);
+      };
+      br.onerror = function(){};
+      var brLastStart = 0;
+      br.onend = function(){
+        /* Keep watching for as long as the AI is still speaking —
+           throttled, so a recogniser that ends instantly (e.g. its
+           permission was refused) can never spin in a tight loop. */
+        if (bargeRecog !== br || !active || myTurn !== turnSeq || phase !== "speaking" || muted) return;
+        var wait = Math.max(0, 500 - (Date.now() - brLastStart));
+        setTimeout(function(){
+          if (bargeRecog === br && active && myTurn === turnSeq && phase === "speaking" && !muted) { brLastStart = Date.now(); try { br.start(); } catch (e) {} }
+        }, wait);
+      };
+      brLastStart = Date.now();
+      try { br.start(); } catch (e) {}
+    }, 650);
+  }
+  function startListen(seedText){
     if (!active || muted || fatalMsg) return;
     if (phase !== "listening") setPhase("listening", statusFor("listening", lastLang));
     else setPhase("listening", statusEl.innerHTML);
+    stopBargeRecog();
     stopRecog();
+    if (seedText) { pendingFinal = mergeText(pendingFinal, seedText); armSubmitTimer(turnSeq); }
     var order = recogOrder();
     var code = order[Math.min(listenAttempt, order.length - 1)];
     var myTurn = turnSeq;
-    var gotFinal = false, restarted = false;
+    var restarted = false;
     function restart(delay){
       if (restarted || !active || myTurn !== turnSeq) return;
       restarted = true;
-      setTimeout(function(){ if (active && phase === "listening" && !muted && !fatalMsg) startListen(); }, delay || 300);
+      setTimeout(function(){ if (active && phase === "listening" && !muted && !fatalMsg && myTurn === turnSeq) startListen(); }, delay || 300);
     }
     try { recog = new SR(); } catch (e) { restart(600); return; }
     recog.lang = RECOG_BCP[code];
     recog.interimResults = true;
     recog.maxAlternatives = 1;
     recog.onresult = function(ev){
-      if (!active || myTurn !== turnSeq) return;
+      if (!active || myTurn !== turnSeq || phase !== "listening") return;
       var interim = "", final = "";
       for (var i = ev.resultIndex; i < ev.results.length; i++) {
         if (ev.results[i].isFinal) final += ev.results[i][0].transcript; else interim += ev.results[i][0].transcript;
       }
-      if (interim && !final) setInterim(interim);
-      if (final.trim()) { gotFinal = true; setInterim(""); handleUser(final.trim()); }
+      if (final.trim()) {
+        /* Accumulate the phrase — do NOT answer yet: the visitor
+           may simply be pausing mid-sentence. The silence timer
+           decides when the turn is really over. */
+        pendingFinal = mergeText(pendingFinal, final.trim());
+        pendingInterim = "";
+        setInterim(pendingFinal);
+        armSubmitTimer(myTurn);
+      } else if (interim) {
+        /* Speech is still arriving: show it live and push the
+           silence deadline out, so the AI keeps waiting. */
+        pendingInterim = interim;
+        setInterim((pendingFinal ? pendingFinal + " " : "") + interim);
+        if (pendingFinal) armSubmitTimer(myTurn);
+      }
     };
     recog.onerror = function(ev){
-      if (!active || myTurn !== turnSeq || gotFinal) return;
+      if (!active || myTurn !== turnSeq) return;
       if (ev.error === "not-allowed" || ev.error === "service-not-allowed") {
+        clearSubmitTimer();
         fatalMsg = true;
         setPhase("idle", "Microphone blocked");
         addLine("ai", TXT.denied[lastLang] || TXT.denied.en);
         return;
       }
-      if (ev.error === "no-speech" || ev.error === "nomatch") listenAttempt++;
+      if ((ev.error === "no-speech" || ev.error === "nomatch") && !pendingFinal && !pendingInterim) listenAttempt++;
       /* network / audio-capture / other: keep the call alive and listen again */
     };
     recog.onend = function(){
-      if (!active || myTurn !== turnSeq || gotFinal) return;
+      if (!active || myTurn !== turnSeq) return;
       if (phase === "listening" && !muted && !fatalMsg) restart(250);
     };
     statusEl.innerHTML = statusFor("listening", lastLang) + "<small>Listening in " + RECOG_NAME[code] + " — Urdu, English and Arabic are tried automatically</small>";
     try { recog.start(); } catch (e) { restart(500); }
   }
   function handleUser(text){
+    clearSubmitTimer();
+    pendingFinal = ""; pendingInterim = "";
+    stopBargeRecog();
+    /* NEVER-REPEAT GUARD: the exact same line again within a few
+       seconds is the recogniser or speaker echo repeating itself,
+       not a new question — ignore it and keep listening instead of
+       answering (and speaking) the same thing twice. */
+    var nowT = Date.now();
+    if (normText(text) && normText(text) === normText(lastUserText) && (nowT - lastUserAt) < 5000) {
+      setPhase("listening", statusFor("listening", lastLang));
+      startListen();
+      return;
+    }
+    lastUserText = text; lastUserAt = nowT;
     turnSeq++;
     var myTurn = turnSeq;
     stopRecog();
@@ -7108,13 +7351,19 @@ document.getElementById("mnav-menu").addEventListener("click", function(){
       if (!active || myTurn !== turnSeq) return;
       var ans = reply || (TXT.unreachable[lang] || TXT.unreachable.en);
       if (history.length) history[history.length - 1].a = ans;
+      lastAiText = ans; /* echo guard for the next listening turn */
       addLine("ai", ans);
       setPhase("speaking", statusFor("speaking", lang));
       speak(ans, lang, function(){
         if (!active || myTurn !== turnSeq) return;
+        stopBargeRecog();
         setPhase("listening", statusFor("listening", lang));
-        startListen();
+        /* Brief pause before the microphone reopens, so the last
+           trace of the AI's own voice from the speaker is never
+           mistaken for the visitor starting to speak. */
+        setTimeout(function(){ if (active && myTurn === turnSeq && phase === "listening") startListen(); }, 400);
       });
+      startBargeWatch(ans, myTurn);
     });
   }
   function fmtTime(s){ var m = Math.floor(s / 60), ss = s % 60; return (m < 10 ? "0" : "") + m + ":" + (ss < 10 ? "0" : "") + ss; }
@@ -7127,6 +7376,8 @@ document.getElementById("mnav-menu").addEventListener("click", function(){
     }
     transcriptEl.innerHTML = "";
     history = []; listenAttempt = 0; turnSeq = 0; fatalMsg = false; muted = false;
+    clearSubmitTimer(); stopBargeRecog();
+    pendingFinal = ""; pendingInterim = ""; lastAiText = ""; lastUserText = ""; lastUserAt = 0; interimEl = null;
     muteBtn.classList.remove("on"); muteTxt.textContent = "Mute";
     overlay.hidden = false;
     document.body.style.overflow = "hidden";
@@ -7171,6 +7422,9 @@ document.getElementById("mnav-menu").addEventListener("click", function(){
     if (!active && overlay.hidden) return;
     active = false;
     turnSeq++;
+    clearSubmitTimer();
+    pendingFinal = ""; pendingInterim = "";
+    stopBargeRecog();
     stopRecog();
     stopSpeaking();
     if (callTimer) { clearInterval(callTimer); callTimer = null; }
@@ -7183,12 +7437,29 @@ document.getElementById("mnav-menu").addEventListener("click", function(){
   var aiBtn = document.getElementById("ai-livecall");
   if (aiBtn) aiBtn.addEventListener("click", function(){ startCall("ai"); });
   endBtn.addEventListener("click", endCall);
+  var stopBtn = document.getElementById("lvc-stop");
+  if (stopBtn) stopBtn.addEventListener("click", function(){
+    if (!active) return;
+    /* STOP: silence the AI instantly — voice, barge-in watcher and
+       any pending reply — and hand the turn back to the visitor.
+       It never sends anything and never makes the AI speak. */
+    turnSeq++;
+    clearSubmitTimer();
+    pendingFinal = ""; pendingInterim = "";
+    stopBargeRecog();
+    stopSpeaking();
+    setInterim("");
+    if (phase === "speaking" || phase === "thinking") {
+      setPhase("listening", statusFor("listening", lastLang));
+      if (!muted && !fatalMsg) startListen();
+    }
+  });
   muteBtn.addEventListener("click", function(){
     if (!active) return;
     muted = !muted;
     muteBtn.classList.toggle("on", muted);
     muteTxt.textContent = muted ? "Unmute" : "Mute";
-    if (muted) { stopRecog(); setPhase("listening", statusFor("muted", lastLang)); avaWrap.className = "lvc-ava-wrap"; }
+    if (muted) { clearSubmitTimer(); stopRecog(); stopBargeRecog(); setPhase("listening", statusFor("muted", lastLang)); avaWrap.className = "lvc-ava-wrap"; }
     else if (phase === "listening" && !fatalMsg) startListen();
   });
   avaWrap.addEventListener("click", function(){
@@ -7196,6 +7467,7 @@ document.getElementById("mnav-menu").addEventListener("click", function(){
     /* Barge-in: stop the AI mid-sentence and listen right away. */
     turnSeq++;
     var myTurn = turnSeq;
+    stopBargeRecog();
     stopSpeaking();
     setPhase("listening", statusFor("listening", lastLang));
     setTimeout(function(){ if (active && myTurn === turnSeq) startListen(); }, 150);
