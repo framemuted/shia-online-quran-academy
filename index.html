@@ -367,9 +367,14 @@ footer.site li{margin:.42rem 0}
 .ai-send{background:linear-gradient(135deg,var(--emerald),var(--emerald-deep));color:#fff;border:none}
 .ai-note{margin:0;padding:.5rem .85rem .7rem;font-size:.76rem;line-height:1.45;color:var(--muted);text-align:center;border-top:1px dashed var(--line)}
 .ai-note a{color:var(--emerald);font-weight:600}
+.ai-qari-row{padding:.55rem .7rem .1rem;background:var(--surface)}
+.ai-qari-btn{display:flex;align-items:center;justify-content:center;gap:.5rem;background:#1faa55;color:#fff;border-radius:12px;padding:.7rem 1rem;font-size:.95rem;font-weight:700;text-decoration:none;min-height:48px}
+.ai-qari-btn svg{width:20px;height:20px;fill:currentColor;flex:none}
+.ai-qari-ask{display:flex;align-items:center;justify-content:center;gap:.5rem;background:#1faa55;color:#fff;border-radius:10px;padding:.6rem .9rem;font-size:.9rem;font-weight:700;text-decoration:none;margin-top:.6rem;min-height:46px}
+.ai-qari-ask svg{width:19px;height:19px;fill:currentColor;flex:none}
 .ai-lock{display:none;padding:1.5rem 1.15rem 1.6rem;text-align:center;flex-direction:column;align-items:center;gap:.55rem}
 .ai-panel.locked .ai-lock{display:flex;overflow-y:auto}
-.ai-panel.locked .ai-chips,.ai-panel.locked .ai-msgs,.ai-panel.locked .ai-inputbar,.ai-panel.locked .ai-note{display:none}
+.ai-panel.locked .ai-chips,.ai-panel.locked .ai-msgs,.ai-panel.locked .ai-inputbar,.ai-panel.locked .ai-note,.ai-panel.locked .ai-qari-row{display:none}
 .ai-lock-icon{width:54px;height:54px;border-radius:50%;background:var(--gold-soft);border:1.5px solid var(--gold);display:flex;align-items:center;justify-content:center;color:var(--emerald-deep)}
 .ai-lock-icon svg{width:26px;height:26px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
 @media (prefers-color-scheme: dark){.ai-lock-icon{color:var(--gold-bright)}}
@@ -620,6 +625,11 @@ nav.main a.nav-free{font-weight:700;color:var(--emerald)}
 .fc-listen{margin-left:auto;min-height:38px;border-radius:999px;border:1.5px solid var(--emerald);background:var(--emerald-soft);color:var(--emerald);display:inline-flex;align-items:center;gap:.35rem;cursor:pointer;padding:.35rem .8rem;font:inherit;font-size:.83rem;font-weight:700}
 .fc-listen svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;flex:none}
 .fc-wa{display:inline-flex;align-items:center;border-radius:999px;padding:.35rem .8rem;font-size:.83rem;font-weight:700;text-decoration:none;background:#1faa55;color:#fff;min-height:38px}
+.fc-qari-row{padding:.55rem 1rem .15rem}
+.fc-qari-btn{display:flex;align-items:center;justify-content:center;gap:.5rem;background:#1faa55;color:#fff;border-radius:12px;padding:.7rem 1rem;font-size:.95rem;font-weight:700;text-decoration:none;min-height:48px}
+.fc-qari-btn svg{width:20px;height:20px;fill:currentColor;flex:none}
+.fc-qari-ask{display:flex;align-items:center;justify-content:center;gap:.5rem;background:#1faa55;color:#fff;border-radius:10px;padding:.6rem .9rem;font-size:.92rem;font-weight:700;text-decoration:none;margin-top:.6rem;min-height:46px}
+.fc-qari-ask svg{width:19px;height:19px;fill:currentColor;flex:none}
 .fc-typing{display:inline-flex;gap:5px;padding:.35rem .1rem}
 .fc-typing i{width:8px;height:8px;border-radius:50%;background:var(--gold);animation:fcBlink 1.2s infinite}
 .fc-typing i:nth-child(2){animation-delay:.18s}
@@ -1583,6 +1593,9 @@ nav.main a.nav-free{font-weight:700;color:var(--emerald)}
             <button type="submit" class="fc-send" id="fc-send" aria-label="Send question"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M22 2 11 13"/><path d="M22 2l-7 20-4-9-9-4 20-7Z"/></svg><span>Send</span></button>
           </div>
         </form>
+        <div class="fc-qari-row">
+          <a class="fc-qari-btn" href="https://wa.me/923074348899" target="_blank" rel="noopener"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M16 3C9.4 3 4 8.3 4 14.9c0 2.6.8 5 2.3 7L4.7 29l7.3-1.5a12 12 0 0 0 4 0.6c6.6 0 12-5.3 12-11.9S22.6 3 16 3Zm5.9 16.9c-.3.8-1.5 1.6-2.2 1.6-.6.1-1.3.2-4.3-.9-3.6-1.5-5.9-5.1-6.1-5.3-.2-.3-1.5-2-1.5-3.7s.9-2.6 1.2-3c.3-.3.7-.4 1-.4h.7c.2 0 .5-.1.8.6l1.1 2.7c.1.3.1.6 0 .9l-.5.7-.5.6c-.2.2-.3.4-.1.7.2.3.8 1.4 1.8 2.2 1.2 1.1 2.3 1.5 2.6 1.6.3.1.5.1.7-.1l1-1.2c.2-.3.4-.2.7-.1l2.7 1.3c.3.2.5.3.6.4 0 .1 0 .7-.2 1.2Z"/></svg><span>Ask Qari Sahib on WhatsApp</span></a>
+        </div>
         <p class="fc-note">This public chat is free for everyone and needs no account. Fiqh answers here are AI-generated general guidance — for a personal religious ruling, ask Qari Muhammad Imran Ali on <a href="#" data-wa="Assalam-o-Alaikum Qari Muhammad Imran Ali! I have a question about Shia fiqh.">WhatsApp</a>. Academy members can also use the signed-in AI Assistant (bottom-left) for Knowledge Center answers with verified book references.</p>
       </div>
       <div class="center" style="margin-top:1.6rem">
@@ -2215,6 +2228,9 @@ nav.main a.nav-free{font-weight:700;color:var(--emerald)}
     </div>
     <p class="ai-voice-hint">Tap the mic and speak your question — or start Live Voice and just talk, like a phone call</p>
   </form>
+  <div class="ai-qari-row">
+    <a class="ai-qari-btn" href="https://wa.me/923074348899" target="_blank" rel="noopener"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M16 3C9.4 3 4 8.3 4 14.9c0 2.6.8 5 2.3 7L4.7 29l7.3-1.5a12 12 0 0 0 4 0.6c6.6 0 12-5.3 12-11.9S22.6 3 16 3Zm5.9 16.9c-.3.8-1.5 1.6-2.2 1.6-.6.1-1.3.2-4.3-.9-3.6-1.5-5.9-5.1-6.1-5.3-.2-.3-1.5-2-1.5-3.7s.9-2.6 1.2-3c.3-.3.7-.4 1-.4h.7c.2 0 .5-.1.8.6l1.1 2.7c.1.3.1.6 0 .9l-.5.7-.5.6c-.2.2-.3.4-.1.7.2.3.8 1.4 1.8 2.2 1.2 1.1 2.3 1.5 2.6 1.6.3.1.5.1.7-.1l1-1.2c.2-.3.4-.2.7-.1l2.7 1.3c.3.2.5.3.6.4 0 .1 0 .7-.2 1.2Z"/></svg><span>Ask Qari Sahib on WhatsApp</span></a>
+  </div>
   <p class="ai-note">Fiqh answers come from this website's verified Knowledge Center, with the book reference (Hawala) shown. For everything else — study help, everyday questions, general chat on any topic — the AI answers helpfully too. Ask in English, اردو, Roman Urdu, Arabic or any language — the reply (text and voice) comes in the same language you use, spoken with a voice for that language; if your device has no voice for it, the closest available voice is used and the reply says so. You can also send a photo of an Arabic book page for its Urdu translation. Only for a personal religious ruling, ask Qari Muhammad Imran Ali on <a href="#" data-wa="Assalam-o-Alaikum Qari Muhammad Imran Ali! I have a question about Shia fiqh.">WhatsApp</a>.</p>
 </section>
 <!-- ============ LIVE VOICE CALL overlay (shared by Free AI Chat + AI Assistant) ============ -->
@@ -5063,8 +5079,10 @@ document.getElementById("mnav-menu").addEventListener("click", function(){
     ar: "LANGUAGE LOCK — ARABIC: Write your ENTIRE reply in Arabic only. Do not write in English or Urdu."
   };
   var ACCURACY_LOCK = "ACCURACY LOCK: Give the correct, accurate answer on every topic. If you genuinely do not know or are unsure, say so honestly in the same language — never invent facts, numbers, references, Hadith, verses or rulings.";
+  var QARI_REDIRECT_LOCK = "If you do not know the answer or are not certain, say so briefly and direct the user to ask Qari Sahib on WhatsApp at +92 307 4348899 — do not guess.";
+  var FRIENDLY_LOCK = "FRIENDLY TONE: Talk like a warm, friendly, helpful friend — natural, relaxed, easy conversation in the user's own language, never robotic, stiff or overly formal. Keep the reply SHORT: 1-3 sentences, only what was asked.";
   function askGemini(q, langName, langCode){
-    var prompt = GEMINI_SYS + "\n\nUser question: " + q + "\n\n[" + (LANG_LOCK[langCode] || ("Instruction: reply entirely in " + (langName || "English") + " — the same language as the question.")) + " " + ACCURACY_LOCK + "]";
+    var prompt = GEMINI_SYS + "\n\nUser question: " + q + "\n\n[" + (LANG_LOCK[langCode] || ("Instruction: reply entirely in " + (langName || "English") + " — the same language as the question.")) + " " + ACCURACY_LOCK + " " + QARI_REDIRECT_LOCK + " " + FRIENDLY_LOCK + "]";
     return geminiProxyCall(prompt, langName || "English", 45000);
   }
 
@@ -5544,6 +5562,17 @@ document.getElementById("mnav-menu").addEventListener("click", function(){
     if (a.source) parts.push("Source: " + a.source);
     return parts.join("\n");
   }
+  /* "Redirect to Qari Sahib": when a reply openly says it does not
+     know / is not sure (in any of the chat languages), a big green
+     WhatsApp button to Qari Sahib is shown right under that reply. */
+  var DONT_KNOW_RE = /i (?:don['’]?t|do not) know|i['’]?m not (?:sure|certain)|i am not (?:sure|certain)|not (?:really )?(?:sure|certain)|can(?:not|['’]?t) say for certain|pata nahi|maloom nahi|nahi(?:n)? (?:pata|maloom)|mujhe nahi|نہیں معلوم|پتا نہیں|معلوم نہیں|لا أعرف|لست متأكد/i;
+  var QARI_WA_URL = "https://wa.me/923074348899";
+  var QARI_WA_ICON = '<svg viewBox="0 0 32 32" aria-hidden="true"><path d="M16 3C9.4 3 4 8.3 4 14.9c0 2.6.8 5 2.3 7L4.7 29l7.3-1.5a12 12 0 0 0 4 0.6c6.6 0 12-5.3 12-11.9S22.6 3 16 3Zm5.9 16.9c-.3.8-1.5 1.6-2.2 1.6-.6.1-1.3.2-4.3-.9-3.6-1.5-5.9-5.1-6.1-5.3-.2-.3-1.5-2-1.5-3.7s.9-2.6 1.2-3c.3-.3.7-.4 1-.4h.7c.2 0 .5-.1.8.6l1.1 2.7c.1.3.1.6 0 .9l-.5.7-.5.6c-.2.2-.3.4-.1.7.2.3.8 1.4 1.8 2.2 1.2 1.1 2.3 1.5 2.6 1.6.3.1.5.1.7-.1l1-1.2c.2-.3.4-.2.7-.1l2.7 1.3c.3.2.5.3.6.4 0 .1 0 .7-.2 1.2Z"/></svg>';
+  function qariAskBtn(cls){
+    var b = document.createElement("a"); b.className = cls; b.href = QARI_WA_URL; b.target = "_blank"; b.rel = "noopener";
+    b.innerHTML = QARI_WA_ICON + "<span>Ask Qari Sahib on WhatsApp</span>";
+    return b;
+  }
   function addAssistant(a){
     var row = document.createElement("div"); row.className = "ai-row";
     var img = document.createElement("img"); img.className = "ai-mini"; img.src = AVATAR; img.alt = "";
@@ -5556,10 +5585,12 @@ document.getElementById("mnav-menu").addEventListener("click", function(){
     });
     if (a.hawala) { var h = document.createElement("div"); h.className = "ai-hawala"; var hs = document.createElement("strong"); hs.textContent = a.lang === "ur" ? "حوالہ (کتابی حوالہ): " : a.lang === "ar" ? "المرجع: " : a.lang === "roman" ? "Hawala (Kitab ka Hawala): " : "Hawala (Book Reference): "; h.appendChild(hs); h.appendChild(document.createTextNode(a.hawala)); bub.appendChild(h); }
     if (a.source) { var s = document.createElement("div"); s.className = "ai-hawala"; var ss = document.createElement("strong"); ss.textContent = "Source: "; s.appendChild(ss); s.appendChild(document.createTextNode(a.source)); bub.appendChild(s); }
+    var dontKnow = DONT_KNOW_RE.test(answerText(a));
+    if (dontKnow) bub.appendChild(qariAskBtn("ai-qari-ask"));
     var actions = document.createElement("div"); actions.className = "ai-actions";
     var hasAction = false;
     if (a.link) { var lk = document.createElement("a"); lk.className = "ai-link"; lk.href = a.link.href; lk.textContent = a.link.label; actions.appendChild(lk); hasAction = true; }
-    if (a.wa) { var w = document.createElement("a"); w.className = "ai-link wa"; w.href = waHref(a.wa); w.target = "_blank"; w.rel = "noopener"; w.textContent = "Ask on WhatsApp"; actions.appendChild(w); hasAction = true; }
+    if (a.wa && !dontKnow) { var w = document.createElement("a"); w.className = "ai-link wa"; w.href = waHref(a.wa); w.target = "_blank"; w.rel = "noopener"; w.textContent = "Ask on WhatsApp"; actions.appendChild(w); hasAction = true; }
     var sp = document.createElement("button"); sp.type = "button"; sp.className = "ai-speak"; sp.setAttribute("aria-label", "Listen to this answer");
     sp.innerHTML = '<svg viewBox="0 0 24 24"><path d="M4 9v6h4l5 4V5L8 9H4Z"/><path d="M16.5 8.5a5 5 0 0 1 0 7"/></svg><span>Listen</span>';
     var txt = answerText(a);
@@ -6335,8 +6366,10 @@ document.getElementById("mnav-menu").addEventListener("click", function(){
     ar: "LANGUAGE LOCK — ARABIC: Write your ENTIRE reply in Arabic only. Do not write in English or Urdu."
   };
   var ACCURACY_LOCK = "ACCURACY LOCK: Give the correct, accurate answer on every topic. If you genuinely do not know or are unsure, say so honestly in the same language — never invent facts, numbers, references, Hadith, verses or rulings.";
+  var QARI_REDIRECT_LOCK = "If you do not know the answer or are not certain, say so briefly and direct the user to ask Qari Sahib on WhatsApp at +92 307 4348899 — do not guess.";
+  var FRIENDLY_LOCK = "FRIENDLY TONE: Talk like a warm, friendly, helpful friend — natural, relaxed, easy conversation in the user's own language, never robotic, stiff or overly formal. Keep the reply SHORT: 1-3 sentences, only what was asked.";
   function askAI(q, lang){
-    var prompt = SYS + "\n\nUser question: " + String(q).slice(0, 3000) + "\n\n[" + (LANG_LOCK[lang] || LANG_LOCK.en) + " " + ACCURACY_LOCK + "]";
+    var prompt = SYS + "\n\nUser question: " + String(q).slice(0, 3000) + "\n\n[" + (LANG_LOCK[lang] || LANG_LOCK.en) + " " + ACCURACY_LOCK + " " + QARI_REDIRECT_LOCK + " " + FRIENDLY_LOCK + "]";
     return proxyCall(prompt, LANGS[lang].name, 45000);
   }
 
@@ -6355,6 +6388,17 @@ document.getElementById("mnav-menu").addEventListener("click", function(){
     var p = document.createElement("p"); p.textContent = text; p.dir = "auto";
     bub.appendChild(p); row.appendChild(bub); msgs.appendChild(row); scrollDown();
   }
+  /* "Redirect to Qari Sahib": when a reply openly says it does not
+     know / is not sure (in any of the chat languages), a big green
+     WhatsApp button to Qari Sahib is shown right under that reply. */
+  var DONT_KNOW_RE = /i (?:don['’]?t|do not) know|i['’]?m not (?:sure|certain)|i am not (?:sure|certain)|not (?:really )?(?:sure|certain)|can(?:not|['’]?t) say for certain|pata nahi|maloom nahi|nahi(?:n)? (?:pata|maloom)|mujhe nahi|نہیں معلوم|پتا نہیں|معلوم نہیں|لا أعرف|لست متأكد/i;
+  var QARI_WA_URL = "https://wa.me/923074348899";
+  var QARI_WA_ICON = '<svg viewBox="0 0 32 32" aria-hidden="true"><path d="M16 3C9.4 3 4 8.3 4 14.9c0 2.6.8 5 2.3 7L4.7 29l7.3-1.5a12 12 0 0 0 4 0.6c6.6 0 12-5.3 12-11.9S22.6 3 16 3Zm5.9 16.9c-.3.8-1.5 1.6-2.2 1.6-.6.1-1.3.2-4.3-.9-3.6-1.5-5.9-5.1-6.1-5.3-.2-.3-1.5-2-1.5-3.7s.9-2.6 1.2-3c.3-.3.7-.4 1-.4h.7c.2 0 .5-.1.8.6l1.1 2.7c.1.3.1.6 0 .9l-.5.7-.5.6c-.2.2-.3.4-.1.7.2.3.8 1.4 1.8 2.2 1.2 1.1 2.3 1.5 2.6 1.6.3.1.5.1.7-.1l1-1.2c.2-.3.4-.2.7-.1l2.7 1.3c.3.2.5.3.6.4 0 .1 0 .7-.2 1.2Z"/></svg>';
+  function qariAskBtn(cls){
+    var b = document.createElement("a"); b.className = cls; b.href = QARI_WA_URL; b.target = "_blank"; b.rel = "noopener";
+    b.innerHTML = QARI_WA_ICON + "<span>Ask Qari Sahib on WhatsApp</span>";
+    return b;
+  }
   function addAI(a){
     var row = document.createElement("div"); row.className = "fc-row";
     var img = document.createElement("img"); img.className = "fc-ava"; img.src = AVATAR; img.alt = "Qari Muhammad Imran Ali";
@@ -6368,8 +6412,10 @@ document.getElementById("mnav-menu").addEventListener("click", function(){
       h.appendChild(hs); h.appendChild(document.createTextNode(a.hawala.replace(/^Hawala: |^حوالہ: |^المرجع: /, "")));
       bub.appendChild(h);
     }
+    var dontKnow = DONT_KNOW_RE.test(answerText(a));
+    if (dontKnow) bub.appendChild(qariAskBtn("fc-qari-ask"));
     var actions = document.createElement("div"); actions.className = "fc-actions";
-    if (a.wa) {
+    if (a.wa && !dontKnow) {
       var w = document.createElement("a"); w.className = "fc-wa"; w.href = WA_URL; w.target = "_blank"; w.rel = "noopener"; w.textContent = "Ask on WhatsApp";
       actions.appendChild(w);
     }
@@ -7346,7 +7392,7 @@ document.getElementById("mnav-menu").addEventListener("click", function(){
     history.push({ u: text });
     setPhase("thinking", statusFor("thinking", lang));
     var convo = history.slice(-5, -1).map(function(h){ return "User: " + h.u + (h.a ? "\nAssistant: " + h.a : ""); }).join("\n");
-    var prompt = SYS + (convo ? "\n\nConversation so far:\n" + convo : "") + "\n\nUser (speaking now): " + text.slice(0, 2000) + "\n\n[" + (LANG_LOCK[lang] || LANG_LOCK.en) + "]";
+    var prompt = SYS + (convo ? "\n\nConversation so far:\n" + convo : "") + "\n\nUser (speaking now): " + text.slice(0, 2000) + "\n\n[" + (LANG_LOCK[lang] || LANG_LOCK.en) + " If you do not know the answer or are not certain, say so briefly and direct the user to ask Qari Sahib on WhatsApp at +92 307 4348899 — do not guess. TONE: speak warmly and naturally, like a friendly helpful friend — relaxed and easy to talk to, never robotic, stiff or overly formal.]";
     proxyCall(prompt, LANGS[lang].name, 45000).then(function(reply){
       if (!active || myTurn !== turnSeq) return;
       var ans = reply || (TXT.unreachable[lang] || TXT.unreachable.en);
