@@ -4204,6 +4204,154 @@ document.getElementById("mnav-menu").addEventListener("click", function(){
 <script>
 "use strict";
 /* =====================================================================
+   FISH AUDIO VOICE — spoken replies for the AI Assistant, the Free
+   AI Chat and the Live Voice Call.
+   - PRIMARY VOICE: Fish Audio (community voice "Ali Khamenei",
+     reference_id a782c569a2e245dfb74b036ab656a288, free model
+     s2.1-pro-free), reached ONLY through the academy's own server
+     proxy (Google Apps Script), called with JSONP exactly like the
+     Gemini proxy:  <proxy>?callback=<fn>&text=<reply text>
+     The proxy answers { ok:true, audio_b64:"<base64 MP3>",
+     format:"mp3" }; the base64 is decoded here and played with an
+     Audio element. The Fish Audio API key lives ONLY on that
+     server — never in this page.
+   - The reply text is split into sentence-size chunks; chunks are
+     fetched one ahead and played in order, so a long answer is
+     spoken completely and in sequence.
+   - FALLBACK: if the proxy fails, answers without audio, or is too
+     slow (no audio within the per-chunk timeout), __fishPlay
+     resolves "failed" and the caller speaks with the device voice
+     (speechSynthesis) exactly as before — the visitor always hears
+     the reply. It resolves "done" when Fish playback finished, and
+     "stopped" when playback was interrupted (barge-in, Stop, panel
+     close, sound off, a newer question) — a stopped reply is never
+     restarted by the fallback.
+   - __fishStopAll() stops Fish playback AND the device voice
+     together; every "silence the AI" point in the three chats calls
+     it, so barge-in and turn-taking behave exactly as before.
+   ===================================================================== */
+(function(){
+  var FISH_TTS_URL = "https://script.google.com/macros/s/AKfycbzYSb07bNqdQj87MVIhR6ysFM4o1fQXvcZ2_BjBkshY6034ga8oPCosamqCYg_q2vZo/exec";
+  var CHUNK_TIMEOUT_MS = 12000;
+  var cbSeq = 0;
+  var epoch = 0;
+  var curAudio = null;
+  var curUrl = null;
+  function revokeCur(){ if (curUrl) { try { URL.revokeObjectURL(curUrl); } catch (e) {} curUrl = null; } }
+  function stopAll(){
+    epoch++;
+    if (curAudio) { try { curAudio.pause(); } catch (e) {} try { curAudio.removeAttribute("src"); curAudio.load(); } catch (e) {} curAudio = null; }
+    revokeCur();
+    if ("speechSynthesis" in window) { try { window.speechSynthesis.cancel(); } catch (e) {} }
+  }
+  window.__fishStopAll = stopAll;
+  function fetchChunk(text){
+    return new Promise(function(resolve){
+      var t = String(text || "").trim();
+      if (!t) { resolve(null); return; }
+      var cbName = "__fishTtsCb" + (++cbSeq) + "_" + Date.now();
+      var settled = false, sc = null, timer = null;
+      function cleanup(){ if (timer) clearTimeout(timer); try { delete window[cbName]; } catch (e) { window[cbName] = undefined; } if (sc && sc.parentNode) sc.parentNode.removeChild(sc); }
+      function done(v){ if (settled) return; settled = true; cleanup(); resolve(v || null); }
+      window[cbName] = function(data){
+        try { done(data && data.ok && typeof data.audio_b64 === "string" && data.audio_b64.length > 100 ? data.audio_b64 : null); }
+        catch (e) { done(null); }
+      };
+      sc = document.createElement("script");
+      sc.src = FISH_TTS_URL + "?callback=" + encodeURIComponent(cbName) + "&text=" + encodeURIComponent(t.slice(0, 600));
+      sc.async = true;
+      sc.onerror = function(){ done(null); };
+      timer = setTimeout(function(){ done(null); }, CHUNK_TIMEOUT_MS);
+      document.head.appendChild(sc);
+    });
+  }
+  function b64ToUrl(b64){
+    var bin = atob(b64);
+    var bytes = new Uint8Array(bin.length);
+    for (var i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    return URL.createObjectURL(new Blob([bytes], { type: "audio/mpeg" }));
+  }
+  function chunkText(text){
+    var chunks = [];
+    String(text || "").split(/\n+/).forEach(function(seg){
+      seg = seg.trim(); if (!seg) return;
+      var parts = seg.match(/[^.!?؟۔]+[.!?؟۔]*/g) || [seg];
+      parts.forEach(function(p){
+        p = p.trim(); if (!p) return;
+        while (p.length > 260) {
+          var cut = p.lastIndexOf(" ", 260);
+          if (cut < 90) cut = 260;
+          chunks.push(p.slice(0, cut).trim());
+          p = p.slice(cut).trim();
+        }
+        if (p) chunks.push(p);
+      });
+    });
+    return chunks.slice(0, 12);
+  }
+  function playFish(text){
+    return new Promise(function(resolve){
+      var my = epoch;
+      var chunks = chunkText(text);
+      if (!chunks.length) { resolve("failed"); return; }
+      var idx = 0, started = false, finished = false;
+      var prefetch = fetchChunk(chunks[0]);
+      function finish(res){ if (finished) return; finished = true; resolve(res); }
+      function step(){
+        if (finished) return;
+        if (my !== epoch) { finish("stopped"); return; }
+        if (idx >= chunks.length) { finish("done"); return; }
+        var pf = prefetch; prefetch = null;
+        pf.then(function(b64){
+          if (finished) return;
+          if (my !== epoch) { finish("stopped"); return; }
+          if (!b64) { finish(started ? "done" : "failed"); return; }
+          if (idx + 1 < chunks.length) prefetch = fetchChunk(chunks[idx + 1]);
+          var url;
+          try { url = b64ToUrl(b64); } catch (e) { finish(started ? "done" : "failed"); return; }
+          revokeCur(); curUrl = url;
+          var a = new Audio(url);
+          curAudio = a;
+          var advanced = false;
+          var safety = setTimeout(function(){
+            if (advanced || finished) return;
+            advanced = true;
+            try { a.pause(); } catch (e) {}
+            if (curAudio === a) curAudio = null;
+            if (!started && idx === 0) { finish("failed"); return; }
+            idx++; step();
+          }, Math.max(9000, chunks[idx].length * 220) + 6000);
+          a.onplaying = function(){ started = true; };
+          a.onended = function(){
+            if (advanced || finished) return;
+            advanced = true; clearTimeout(safety);
+            if (curAudio === a) curAudio = null;
+            idx++; step();
+          };
+          a.onerror = function(){
+            if (advanced || finished) return;
+            advanced = true; clearTimeout(safety);
+            finish(started ? "done" : "failed");
+          };
+          var pr = null;
+          try { pr = a.play(); } catch (e) { clearTimeout(safety); finish(started ? "done" : "failed"); return; }
+          if (pr && pr.then) pr.then(function(){ started = true; }, function(){});
+          if (pr && pr.catch) pr.catch(function(){
+            if (advanced || finished) return;
+            advanced = true; clearTimeout(safety);
+            finish(started ? "done" : "failed");
+          });
+        });
+      }
+      step();
+    });
+  }
+  window.__fishPlay = playFish;
+})();
+</script>
+<script>
+"use strict";
+/* =====================================================================
    AI Assistant — Shia Online Quran Academy
    - Answers come FIRST from this website's own verified content
      (Knowledge Center data: Usool-e-Deen, Furoo-e-Deen, Shia Namaz,
@@ -5511,7 +5659,7 @@ document.getElementById("mnav-menu").addEventListener("click", function(){
     var liveCallBtn = document.getElementById("ai-livecall"); if (liveCallBtn) liveCallBtn.disabled = !on;
     if (sendBtn) sendBtn.disabled = !on;
     if (!on) {
-      if ("speechSynthesis" in window) { try { window.speechSynthesis.cancel(); } catch (e) {} }
+      if (window.__fishStopAll) { window.__fishStopAll(); } else if ("speechSynthesis" in window) { try { window.speechSynthesis.cancel(); } catch (e) {} }
       if (listening) { try { if (recog) recog.stop(); } catch (e) {} setListening(false); }
     }
     return on;
@@ -5802,6 +5950,24 @@ document.getElementById("mnav-menu").addEventListener("click", function(){
   function speak(text, force, lang){
     if (!aiSignedIn()) return;
     if (!soundOn && !force) return;
+    /* FISH AUDIO VOICE FIRST: the spoken reply now comes from the
+       Fish Audio proxy (Ali Khamenei voice) — see __fishPlay above.
+       The device voice (speakDevice / speakNow) stays as the
+       automatic fallback when the proxy fails or is too slow, so a
+       reply is always heard. A reply stopped by the user (barge-in,
+       panel close, sound off, a newer question) is never restarted. */
+    if (window.__fishPlay) {
+      if (window.__fishStopAll) window.__fishStopAll();
+      window.__fishPlay(text).then(function(res){
+        if (res !== "failed") return;
+        if (!aiSignedIn() || (!soundOn && !force)) return;
+        speakDevice(text, force, lang);
+      });
+      return;
+    }
+    speakDevice(text, force, lang);
+  }
+  function speakDevice(text, force, lang){
     if (!("speechSynthesis" in window)) {
       if (!shownVoiceNotes["nosynth"]) { shownVoiceNotes["nosynth"] = true; addAssistant({ paras: [VOICE_NONE_NOTE[lang] || VOICE_NONE_NOTE.en], lang: lang }); }
       return;
@@ -6063,7 +6229,7 @@ document.getElementById("mnav-menu").addEventListener("click", function(){
     clearAiSubmitTimer();
     /* Starting to listen always silences the AI first — the user
        taking the mic is a barge-in: it never talks over them. */
-    if ("speechSynthesis" in window) { try { window.speechSynthesis.cancel(); } catch (e) {} }
+    if (window.__fishStopAll) { window.__fishStopAll(); } else if ("speechSynthesis" in window) { try { window.speechSynthesis.cancel(); } catch (e) {} }
     if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
       setListening(true, AI_LISTEN_TXT.asking[lastLang] || AI_LISTEN_TXT.asking.en);
       navigator.mediaDevices.getUserMedia({ audio: true }).then(function(stream){
@@ -6101,7 +6267,7 @@ document.getElementById("mnav-menu").addEventListener("click", function(){
     if (!aiSignedIn()) { paintAiGate(); if (!opened) setOpen(true); return; }
     if (!opened) setOpen(true);
     var myAsk = ++askSeq;
-    if ("speechSynthesis" in window) { try { window.speechSynthesis.cancel(); } catch (e) {} }
+    if (window.__fishStopAll) { window.__fishStopAll(); } else if ("speechSynthesis" in window) { try { window.speechSynthesis.cancel(); } catch (e) {} }
     var lang = detectLang(q).code;
     lastLang = lang;
     if (/سلام/.test(q) && q.split(/\s+/).filter(Boolean).length <= 6 && /[\u0600-\u06FF]/.test(q)) {
@@ -6285,7 +6451,7 @@ document.getElementById("mnav-menu").addEventListener("click", function(){
       }
     } else {
       panel.style.height = "";
-      if ("speechSynthesis" in window) { try { window.speechSynthesis.cancel(); } catch (e) {} }
+      if (window.__fishStopAll) { window.__fishStopAll(); } else if ("speechSynthesis" in window) { try { window.speechSynthesis.cancel(); } catch (e) {} }
       if (listening) { try { recog.stop(); } catch (e) {} setListening(false); }
     }
   }
@@ -6315,7 +6481,7 @@ document.getElementById("mnav-menu").addEventListener("click", function(){
     soundOn = !soundOn;
     soundBtn.classList.toggle("off", !soundOn);
     soundBtn.setAttribute("aria-label", soundOn ? "Turn voice replies off" : "Turn voice replies on");
-    if (!soundOn && "speechSynthesis" in window) { try { window.speechSynthesis.cancel(); } catch (e) {} }
+    if (!soundOn) { if (window.__fishStopAll) { window.__fishStopAll(); } else if ("speechSynthesis" in window) { try { window.speechSynthesis.cancel(); } catch (e) {} } }
   });
   msgs.addEventListener("click", function(e){
     var a = e.target && e.target.closest ? e.target.closest('a[href^="#"]') : null;
@@ -6673,6 +6839,19 @@ document.getElementById("mnav-menu").addEventListener("click", function(){
     setTimeout(go, 900);
   }
   function speak(text, lang){
+    /* FISH AUDIO VOICE FIRST (Ali Khamenei voice via the proxy —
+       see __fishPlay); the device voice in speakDevice() is the
+       automatic fallback when the proxy fails or is too slow. */
+    if (window.__fishStopAll) window.__fishStopAll();
+    if (window.__fishPlay) {
+      window.__fishPlay(text).then(function(res){
+        if (res === "failed") speakDevice(text, lang);
+      });
+      return;
+    }
+    speakDevice(text, lang);
+  }
+  function speakDevice(text, lang){
     if (!("speechSynthesis" in window)) return;
     fcWhenVoicesReady(function(){
     loadVoices();
@@ -6840,7 +7019,7 @@ document.getElementById("mnav-menu").addEventListener("click", function(){
     clearFcSubmitTimer();
     /* Starting to listen always silences the AI first — the visitor
        taking the mic is a barge-in: it never talks over them. */
-    if ("speechSynthesis" in window) { try { window.speechSynthesis.cancel(); } catch (e) {} }
+    if (window.__fishStopAll) { window.__fishStopAll(); } else if ("speechSynthesis" in window) { try { window.speechSynthesis.cancel(); } catch (e) {} }
     if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
       setListening(true, FC_LISTEN_TXT.asking[lastLang] || FC_LISTEN_TXT.asking.en);
       navigator.mediaDevices.getUserMedia({ audio: true }).then(function(stream){
@@ -6965,7 +7144,7 @@ document.getElementById("mnav-menu").addEventListener("click", function(){
        above already guarantees one question, one answer: a second
        question sent while one is being answered is not queued, so
        no extra or repeated reply can ever appear.) */
-    if ("speechSynthesis" in window) { try { window.speechSynthesis.cancel(); } catch (e) {} }
+    if (window.__fishStopAll) { window.__fishStopAll(); } else if ("speechSynthesis" in window) { try { window.speechSynthesis.cancel(); } catch (e) {} }
     var lang = detectLang(q);
     lastLang = lang;
     addUser(q);
@@ -7054,13 +7233,13 @@ document.getElementById("mnav-menu").addEventListener("click", function(){
     soundOn = !soundOn;
     soundBtn.classList.toggle("off", !soundOn);
     soundBtn.setAttribute("aria-label", soundOn ? "Turn voice replies off" : "Turn voice replies on");
-    if (!soundOn && "speechSynthesis" in window) { try { window.speechSynthesis.cancel(); } catch (e) {} }
+    if (!soundOn) { if (window.__fishStopAll) { window.__fishStopAll(); } else if ("speechSynthesis" in window) { try { window.speechSynthesis.cancel(); } catch (e) {} } }
   });
   if (clearBtn) clearBtn.addEventListener("click", function(){
     /* A cleared chat is a fresh first view: suggestions return. */
     if (shell) shell.classList.remove("started", "chips-off");
     msgs.innerHTML = "";
-    if ("speechSynthesis" in window) { try { window.speechSynthesis.cancel(); } catch (e) {} }
+    if (window.__fishStopAll) { window.__fishStopAll(); } else if ("speechSynthesis" in window) { try { window.speechSynthesis.cancel(); } catch (e) {} }
     var g = GREETING.en;
     addAI({ title: g.title, paras: g.paras, lang: "en" });
   });
@@ -7449,6 +7628,26 @@ document.getElementById("mnav-menu").addEventListener("click", function(){
     setTimeout(go, 900);
   }
   function speak(text, lang, onDone){
+    /* FISH AUDIO VOICE FIRST (Ali Khamenei voice via the proxy —
+       see __fishPlay): when Fish playback finishes, the call turn
+       ends exactly as before (onDone). If the proxy fails or is
+       too slow, the device voice in speakNow() speaks instead. If
+       playback was stopped (barge-in / Stop / End Call), onDone is
+       NOT called — whoever stopped it already handed the turn back
+       to the visitor. */
+    if (window.__fishPlay) {
+      stopSpeaking();
+      var doneCalled = false;
+      function doneOnce(){ if (doneCalled) return; doneCalled = true; onDone && onDone(); }
+      window.__fishPlay(text).then(function(res){
+        if (res === "done") { doneOnce(); return; }
+        if (res === "failed") {
+          if (!("speechSynthesis" in window)) { doneOnce(); return; }
+          lvcWhenVoicesReady(function(){ speakNow(text, lang, doneOnce); });
+        }
+      });
+      return;
+    }
     if (!("speechSynthesis" in window)) { onDone && onDone(); return; }
     lvcWhenVoicesReady(function(){ speakNow(text, lang, onDone); });
   }
@@ -7484,7 +7683,7 @@ document.getElementById("mnav-menu").addEventListener("click", function(){
   function stopSpeaking(){
     if (speechTimer) { clearTimeout(speechTimer); speechTimer = null; }
     speechFinish = null;
-    if ("speechSynthesis" in window) { try { window.speechSynthesis.cancel(); } catch (e) {} }
+    if (window.__fishStopAll) { window.__fishStopAll(); } else if ("speechSynthesis" in window) { try { window.speechSynthesis.cancel(); } catch (e) {} }
   }
   /* ---------- call state machine ---------- */
   var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
