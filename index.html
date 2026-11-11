@@ -4744,6 +4744,10 @@ document.getElementById("mnav-menu").addEventListener("click", function(){
     if (/\b(hai|hain|hy)\s*[?.!]*$/.test(s.trim().toLowerCase())) rScore += 2;
     if (/\bk(ya|ia)\b[^.?!]*\b(hai|hain|hy)\b/.test(lowT)) rScore += 2;
     if (/\b(mujhe|mujhy|hamein|hamen|tumhe|tumhen|aapko)\b/.test(lowT)) rScore += 2;
+    /* No language signal in the message itself (a name, "ok", a
+       number, an emoji): stay in the language the conversation is
+       already in — never snap back to English mid-conversation. */
+    if (rScore === 0 && eScore === 0) return { code: LANGS[lastLang] ? lastLang : "en" };
     var isRoman = (rScore >= 3 && rScore >= eScore) || (rScore >= 2 && eScore === 0);
     return { code: isRoman ? "roman" : "en" };
   }
@@ -5081,9 +5085,33 @@ document.getElementById("mnav-menu").addEventListener("click", function(){
   var ACCURACY_LOCK = "ACCURACY LOCK: Give the correct, accurate answer on every topic. If you genuinely do not know or are unsure, say so honestly in the same language — never invent facts, numbers, references, Hadith, verses or rulings.";
   var QARI_REDIRECT_LOCK = "If you do not know the answer or are not certain, say so briefly and direct the user to ask Qari Sahib on WhatsApp at +92 307 4348899 — do not guess.";
   var FRIENDLY_LOCK = "FRIENDLY TONE: Talk like a warm, friendly, helpful friend — natural, relaxed, easy conversation in the user's own language, never robotic, stiff or overly formal. Keep the reply SHORT: 1-3 sentences, only what was asked.";
+  /* SAME-LANGUAGE GUARANTEE for AI replies: the returned text is
+     itself language-checked with detectLang(). If it clearly came
+     back in a DIFFERENT language from the user's (script instead of
+     Latin, Latin instead of script, or — on a longer reply — the
+     other Latin language), the question is asked ONE more time with
+     an explicit correction, and the corrected reply is used when it
+     matches. The user is never left without a reply: if the retry
+     fails or still mismatches, the better of the two texts wins. */
+  function replyLangMismatch(text, want){
+    var t = String(text || "").trim();
+    if (t.length < 25 || !LANGS[want]) return false; /* too short to judge fairly */
+    var got = detectLang(t).code;
+    if (got === want) return false;
+    if (want === "ur" || want === "ar") return got === "en" || got === "roman"; /* script was asked for, Latin came back */
+    if (got === "ur" || got === "ar") return true; /* Latin was asked for, script came back */
+    return t.length >= 60; /* English vs Roman Urdu: trust the detector on a substantial reply */
+  }
   function askGemini(q, langName, langCode){
     var prompt = GEMINI_SYS + "\n\nUser question: " + q + "\n\n[" + (LANG_LOCK[langCode] || ("Instruction: reply entirely in " + (langName || "English") + " — the same language as the question.")) + " " + ACCURACY_LOCK + " " + QARI_REDIRECT_LOCK + " " + FRIENDLY_LOCK + "]";
-    return geminiProxyCall(prompt, langName || "English", 45000);
+    return geminiProxyCall(prompt, langName || "English", 45000).then(function(text){
+      if (!text || !langCode || !replyLangMismatch(text, langCode)) return text;
+      var fixPrompt = prompt + "\n\n[IMPORTANT: your previous reply was NOT in the user's language. Write your ENTIRE reply again in " + (LANGS[langCode] ? LANGS[langCode].name : langName) + " only — the same answer, the same meaning, nothing in any other language.]";
+      return geminiProxyCall(fixPrompt, langName || "English", 45000).then(function(t2){
+        if (t2 && !replyLangMismatch(t2, langCode)) return t2;
+        return t2 || text;
+      });
+    });
   }
 
   /* Wrap a Gemini reply for display. A FIQH topic keeps the honest
@@ -5808,15 +5836,36 @@ document.getElementById("mnav-menu").addEventListener("click", function(){
     if (/[\u0679\u0688\u0691\u06BE\u06D2]/.test(s)) ah += 1; /* Urdu-only letters present */
     return Math.min(1, ah / aw.length);
   }
+  /* IMMEDIATE spoken-language detection: while the recogniser is
+     running, the words heard SO FAR are language-checked on every
+     result with detectLang(). When they clearly belong to a
+     DIFFERENT recognition language — an English recogniser hearing
+     clear Roman Urdu, or an Urdu recogniser hearing clear Arabic
+     (or the reverse) — recognition restarts in that language AT
+     ONCE, keeping the words already heard, instead of letting the
+     whole turn finish in the wrong language. Returns the target
+     recognition code, or null when no switch is warranted. */
+  function liveRecogTarget(heard, curCode){
+    var t = String(heard || "");
+    if (t.replace(/\s/g, "").length < 6) return null; /* too little heard to judge */
+    var dc = detectLang(t).code;
+    var target = dc === "roman" ? "ur" : dc;
+    if (!target || target === curCode) return null;
+    if (curCode === "en") return dc === "roman" ? "ur" : null; /* Latin in: only a clear Roman Urdu signal switches to Urdu */
+    if ((curCode === "ur" && target === "ar") || (curCode === "ar" && target === "ur")) return target;
+    return null;
+  }
   var listenCands = [], listenIdx = 0, listenSwitching = false, listenDone = false;
+  var aiHeardSeed = "", aiSwitchedTo = {};
   var aiSubmitTimer = null;
   function clearAiSubmitTimer(){ if (aiSubmitTimer) { clearTimeout(aiSubmitTimer); aiSubmitTimer = null; } }
   function startListening(idx){
     listenIdx = idx;
+    listenDone = false; /* a fresh attempt may always submit — an earlier attempt's switch must not mute this one */
     var cand = listenCands[idx];
     if (!cand) { setListening(false); return; }
     var code = cand, meta = RECOG_LANGS[code];
-    var finalText = "", finalConf = null, settled = false;
+    var finalText = aiHeardSeed || "", finalConf = null, settled = false;
     /* WAIT-FOR-THE-END RULE: a "final" result is only a phrase, not
        the end of the user's message — they may just be pausing
        mid-sentence. Heard finals are accumulated and sent to ask()
@@ -5830,6 +5879,21 @@ document.getElementById("mnav-menu").addEventListener("click", function(){
       if (settled || !listening || listenDone) return;
       var q = finalText.trim();
       if (!q) return;
+      /* Wrong-language guard, decided from the words themselves:
+         if what was heard clearly belongs to another candidate
+         language, switch to that language's recogniser — keeping
+         the words already heard as the seed — instead of answering
+         in the wrong language. */
+      var lt = liveRecogTarget(q, code);
+      if (lt && listenCands.indexOf(lt) > -1 && listenCands.indexOf(lt) !== listenIdx && !aiSwitchedTo[lt]) {
+        aiSwitchedTo[lt] = true;
+        settled = true; listenDone = true; listenSwitching = true;
+        aiHeardSeed = finalText;
+        try { if (recog) recog.stop(); } catch (e) {}
+        setListening(true, (AI_LISTEN_TXT.listening[lastLang] || AI_LISTEN_TXT.listening.en) + " (" + RECOG_LANGS[lt].name + ")");
+        setTimeout(function(){ listenSwitching = false; if (listening) startListening(listenCands.indexOf(lt)); }, 300);
+        return;
+      }
       /* Wrong-language guard: a transcript whose words barely fit
          the attempted language AND that the recogniser itself was
          unsure about is almost certainly speech in another
@@ -5839,12 +5903,14 @@ document.getElementById("mnav-menu").addEventListener("click", function(){
       var unsure = (finalConf !== null && finalConf < 0.65);
       if (unsure && fit < 0.15 && listenIdx < listenCands.length - 1) {
         settled = true; listenDone = true; listenSwitching = true;
+        aiHeardSeed = finalText;
         try { if (recog) recog.stop(); } catch (e) {}
         setListening(true, (AI_LISTEN_TXT.listening[lastLang] || AI_LISTEN_TXT.listening.en) + " (" + RECOG_LANGS[listenCands[listenIdx + 1]].name + ")");
         setTimeout(function(){ listenSwitching = false; if (listening) startListening(listenIdx + 1); }, 350);
         return;
       }
       settled = true; listenDone = true;
+      aiHeardSeed = "";
       setListening(false);
       try { if (recog) recog.stop(); } catch (e) {}
       /* ask() runs detectLang() on the transcript, so the written
@@ -5884,6 +5950,21 @@ document.getElementById("mnav-menu").addEventListener("click", function(){
           }
           input.value = finalText + interim;
           if (interim || finalText) status.textContent = "🎙 " + (finalText + interim); /* live feedback: the user sees their words appear as they speak */
+          /* IMMEDIATE language switch, live: the words heard so far
+             clearly belong to another candidate language — restart
+             recognition in that language right now, keeping the
+             words already heard, instead of waiting for the turn to
+             end in the wrong language. */
+          var ltNow = liveRecogTarget(finalText + interim, code);
+          if (ltNow && listenCands.indexOf(ltNow) > -1 && listenCands.indexOf(ltNow) !== idx && !aiSwitchedTo[ltNow]) {
+            aiSwitchedTo[ltNow] = true;
+            settled = true; listenDone = true; listenSwitching = true;
+            aiHeardSeed = finalText; clearAiSubmitTimer();
+            try { if (recog) recog.stop(); } catch (e) {}
+            setListening(true, (AI_LISTEN_TXT.listening[lastLang] || AI_LISTEN_TXT.listening.en) + " (" + RECOG_LANGS[ltNow].name + ")");
+            setTimeout(function(){ listenSwitching = false; if (listening) startListening(listenCands.indexOf(ltNow)); }, 250);
+            return;
+          }
           /* Any speech activity — a new phrase OR still-arriving
              interim words — pushes the silence deadline out. Only
              real silence after the last word sends the message. */
@@ -5925,6 +6006,7 @@ document.getElementById("mnav-menu").addEventListener("click", function(){
   function beginListening(){
     listenCands = recogCandidates();
     listenDone = false; listenSwitching = false;
+    aiHeardSeed = ""; aiSwitchedTo = {};
     clearAiSubmitTimer();
     /* Starting to listen always silences the AI first — the user
        taking the mic is a barge-in: it never talks over them. */
@@ -6240,6 +6322,10 @@ document.getElementById("mnav-menu").addEventListener("click", function(){
     if (/\b(hai|hain|hy)\s*[?.!]*$/.test(s.trim().toLowerCase())) rScore += 2;
     if (/\bk(ya|ia)\b[^.?!]*\b(hai|hain|hy)\b/.test(lowT)) rScore += 2;
     if (/\b(mujhe|mujhy|hamein|hamen|tumhe|tumhen|aapko)\b/.test(lowT)) rScore += 2;
+    /* No language signal in the message itself (a name, "ok", a
+       number, an emoji): stay in the language the conversation is
+       already in — never snap back to English mid-conversation. */
+    if (rScore === 0 && eScore === 0) return LANGS[lastLang] ? lastLang : "en";
     var isRoman = (rScore >= 3 && rScore >= eScore) || (rScore >= 2 && eScore === 0);
     return isRoman ? "roman" : "en";
   }
@@ -6368,9 +6454,33 @@ document.getElementById("mnav-menu").addEventListener("click", function(){
   var ACCURACY_LOCK = "ACCURACY LOCK: Give the correct, accurate answer on every topic. If you genuinely do not know or are unsure, say so honestly in the same language — never invent facts, numbers, references, Hadith, verses or rulings.";
   var QARI_REDIRECT_LOCK = "If you do not know the answer or are not certain, say so briefly and direct the user to ask Qari Sahib on WhatsApp at +92 307 4348899 — do not guess.";
   var FRIENDLY_LOCK = "FRIENDLY TONE: Talk like a warm, friendly, helpful friend — natural, relaxed, easy conversation in the user's own language, never robotic, stiff or overly formal. Keep the reply SHORT: 1-3 sentences, only what was asked.";
+  /* SAME-LANGUAGE GUARANTEE for AI replies: the returned text is
+     itself language-checked with detectLang(). If it clearly came
+     back in a DIFFERENT language from the visitor's (script instead
+     of Latin, Latin instead of script, or — on a longer reply —
+     the other Latin language), the question is asked ONE more time
+     with an explicit correction, and the corrected reply is used
+     when it matches. The visitor is never left without a reply:
+     if the retry fails or still mismatches, the better text wins. */
+  function replyLangMismatch(text, want){
+    var t = String(text || "").trim();
+    if (t.length < 25 || !LANGS[want]) return false; /* too short to judge fairly */
+    var got = detectLang(t);
+    if (got === want) return false;
+    if (want === "ur" || want === "ar") return got === "en" || got === "roman"; /* script was asked for, Latin came back */
+    if (got === "ur" || got === "ar") return true; /* Latin was asked for, script came back */
+    return t.length >= 60; /* English vs Roman Urdu: trust the detector on a substantial reply */
+  }
   function askAI(q, lang){
     var prompt = SYS + "\n\nUser question: " + String(q).slice(0, 3000) + "\n\n[" + (LANG_LOCK[lang] || LANG_LOCK.en) + " " + ACCURACY_LOCK + " " + QARI_REDIRECT_LOCK + " " + FRIENDLY_LOCK + "]";
-    return proxyCall(prompt, LANGS[lang].name, 45000);
+    return proxyCall(prompt, LANGS[lang].name, 45000).then(function(text){
+      if (!text || !replyLangMismatch(text, lang)) return text;
+      var fixPrompt = prompt + "\n\n[IMPORTANT: your previous reply was NOT in the visitor's language. Write your ENTIRE reply again in " + LANGS[lang].name + " only — the same answer, the same meaning, nothing in any other language.]";
+      return proxyCall(fixPrompt, LANGS[lang].name, 45000).then(function(t2){
+        if (t2 && !replyLangMismatch(t2, lang)) return t2;
+        return t2 || text;
+      });
+    });
   }
 
   /* ---------------- Rendering ---------------- */
@@ -6489,6 +6599,7 @@ document.getElementById("mnav-menu").addEventListener("click", function(){
   /* ---------------- Listening (auto-detect spoken language) ---------------- */
   var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
   var recog = null, listening = false, listenCands = [], attemptSeq = 0, fcSessionMsg = false;
+  var fcHeardSeed = "", fcSwitchedTo = {};
   var fcSubmitTimer = null;
   function clearFcSubmitTimer(){ if (fcSubmitTimer) { clearTimeout(fcSubmitTimer); fcSubmitTimer = null; } }
   var RECOG_BCP = { ur: "ur-PK", en: "en-US", ar: "ar-SA" };
@@ -6507,11 +6618,30 @@ document.getElementById("mnav-menu").addEventListener("click", function(){
     push("ur"); push("en"); push("ar");
     return order;
   }
+  /* IMMEDIATE spoken-language detection: while the recogniser is
+     running, the words heard SO FAR are language-checked on every
+     result with detectLang(). When they clearly belong to a
+     DIFFERENT recognition language — an English recogniser hearing
+     clear Roman Urdu, or an Urdu recogniser hearing clear Arabic
+     (or the reverse) — recognition restarts in that language AT
+     ONCE, keeping the words already heard, instead of letting the
+     whole turn finish in the wrong language. Returns the target
+     recognition code, or null when no switch is warranted. */
+  function liveRecogTarget(heard, curCode){
+    var t = String(heard || "");
+    if (t.replace(/\s/g, "").length < 6) return null; /* too little heard to judge */
+    var dc = detectLang(t);
+    var target = dc === "roman" ? "ur" : dc;
+    if (!target || target === curCode) return null;
+    if (curCode === "en") return dc === "roman" ? "ur" : null; /* Latin in: only a clear Roman Urdu signal switches to Urdu */
+    if ((curCode === "ur" && target === "ar") || (curCode === "ar" && target === "ur")) return target;
+    return null;
+  }
   function startListen(idx){
     var code = listenCands[idx];
     var my = ++attemptSeq;
     var gotFinal = false;
-    var accFinal = "";
+    var accFinal = fcHeardSeed || "";
     /* WAIT-FOR-THE-END RULE: a "final" result is only a phrase, not
        the end of the visitor's message — they may be pausing
        mid-sentence. Phrases are accumulated and sent to ask() only
@@ -6525,6 +6655,21 @@ document.getElementById("mnav-menu").addEventListener("click", function(){
       if (my !== attemptSeq || gotFinal) return;
       var q = accFinal.trim();
       if (!q) return;
+      /* Wrong-language guard, decided from the words themselves:
+         if what was heard clearly belongs to another candidate
+         language, switch to that language's recogniser — keeping
+         the words already heard as the seed — instead of answering
+         in the wrong language. */
+      var lt = liveRecogTarget(q, code);
+      if (lt && listenCands.indexOf(lt) > -1 && listenCands.indexOf(lt) !== idx && !fcSwitchedTo[lt]) {
+        fcSwitchedTo[lt] = true;
+        fcHeardSeed = accFinal;
+        gotFinal = true; attemptSeq++;
+        try { if (recog) recog.stop(); } catch (e) {}
+        startListen(listenCands.indexOf(lt));
+        return;
+      }
+      fcHeardSeed = "";
       gotFinal = true; attemptSeq++;
       try { if (recog) recog.stop(); } catch (e) {}
       setListening(false);
@@ -6548,6 +6693,21 @@ document.getElementById("mnav-menu").addEventListener("click", function(){
         }
         if (final.trim()) accFinal = accFinal ? (accFinal + " " + final.trim()) : final.trim();
         if (interim || accFinal) setListening(true, "🎙 " + (accFinal ? accFinal + " " : "") + interim); /* live feedback: your words appear as you speak */
+        /* IMMEDIATE language switch, live: the words heard so far
+           clearly belong to another candidate language — restart
+           recognition in that language right now, keeping the words
+           already heard, instead of waiting for the turn to end in
+           the wrong language. */
+        var ltNow = liveRecogTarget((accFinal + " " + interim).trim(), code);
+        if (ltNow && listenCands.indexOf(ltNow) > -1 && listenCands.indexOf(ltNow) !== idx && !fcSwitchedTo[ltNow]) {
+          fcSwitchedTo[ltNow] = true;
+          fcHeardSeed = accFinal;
+          clearFcSubmitTimer();
+          attemptSeq++; /* invalidate this attempt's handlers */
+          try { if (recog) recog.stop(); } catch (e) {}
+          startListen(listenCands.indexOf(ltNow));
+          return;
+        }
         if (accFinal) armFcSubmit(); /* speech activity pushes the silence deadline out */
       };
       recog.onerror = function(ev){
@@ -6581,6 +6741,7 @@ document.getElementById("mnav-menu").addEventListener("click", function(){
   function beginFcListening(){
     listenCands = recogOrder();
     fcSessionMsg = false;
+    fcHeardSeed = ""; fcSwitchedTo = {};
     clearFcSubmitTimer();
     /* Starting to listen always silences the AI first — the visitor
        taking the mic is a barge-in: it never talks over them. */
@@ -7027,7 +7188,7 @@ document.getElementById("mnav-menu").addEventListener("click", function(){
                    ar: "المكالمات الصوتية المباشرة غير مدعومة في هذا المتصفح. يرجى فتح هذا الموقع في متصفح كروم (أندرويد) أو سفاري (آيفون) وتجربة الصوت المباشر هناك — أو متابعة استخدام المحادثة المكتوبة وزر الصوت." }
   };
   /* ---------- language detection (same policy as the chats) ---------- */
-  var ROMAN_W = { kya:2,kia:2,hai:2,hain:2,kaise:2,kese:2,batao:2,bataein:2,mujhe:2,hamein:2,tumhe:2,aapko:2,namaz:2,namaaz:2,wuzu:2,wudu:2,ghusl:1,roza:2,khums:2,zakat:2,chahiye:2,chahta:2,chahti:2,shukriya:2,shukria:2,tarika:2,tareeqa:2,kyun:2,kyon:2,kahan:2,kidhar:2,kitna:2,kitne:2,konsa:2,hota:2,hoti:2,hoga:2,karna:2,karo:2,karein:2,karte:2,karta:2,seekhna:2,samjhao:2,parhna:2,parhte:2,pooch:2,sawal:2,jawab:2,masla:2,kitab:2,hawala:2,dua:2,baat:2,bol:2,bolna:2,sunao:2,dekho:2,theek:2,sahi:2,ghalat:2,matlab:2,madad:2,waqt:1,aaj:1,kal:1,abhi:1,kabhi:2,phir:2,lekin:2,magar:2,agar:2,koi:2,kuch:2,milta:2,sakta:2,sakti:2,jata:2,aata:2,hona:2,tha:2,thi:2,hua:2,aaya:2,bohat:2,bahut:2,thoda:2,zyada:2,sirf:2,bilkul:2,kyunki:2,isliye:2,saath:2,pehle:2,liye:2,baray:2,shuru:2,khatam:2,acha:2,achha:2,mushkil:2,asan:2,hamesha:2,shagird:2,madarsa:2,mera:1,meri:1,mere:1,hamara:2,tumhara:2,uska:2,apna:2,apni:2,aap:2,mein:1,main:1,aur:1,nahi:2,nhi:2,kab:1,kon:2,bhi:1,se:1,par:1,ne:1,ye:1,yeh:1,wo:1,woh:1,to:1,wala:1,wali:1,gaya:1,gayi:2,raha:1,rahi:2,deen:2,duniya:2,gunah:2,sawab:2,farz:2,sunnat:2,azan:2,ramzan:2,hadees:2,jaiz:2,tauba:2,ilm:2,taleem:2,urdu:1,quran:1,allah:1,rasool:1,nabi:1,imam:1,surah:1,ayat:1,hadith:1,fiqh:1,halal:1,haram:1,wajib:1,islam:1,masjid:1,hajj:1,umrah:1,ziyarat:1,ashura:1,muharram:1,ramadan:1,iftar:1,karbala:1,jumma:2,eid:1,fees:1 };
+  var ROMAN_W = { kya:2, kia:2, hai:2, hain:2, hy:2, he:1, hoon:2, hun:2, kaise:2, kese:2, kaisay:2, kesay:2, kaisa:2, kaisi:2, batao:2, bataein:2, batain:2, batayein:2, batayen:2, bata:1, mujhe:2, mujhy:2, mujhko:2, hamein:2, hamen:2, tumhe:2, aapko:2, namaz:2, namaaz:2, wuzu:2, wudu:2, ghusl:2, roza:2, rozay:2, roze:2, khums:2, zakat:2, zakaat:2, chahiye:2, chahye:2, chahta:2, chahti:2, chahte:2, shukria:2, shukriya:2, tarika:2, tareeqa:2, tariqa:2, kyun:2, kyon:2, kyu:2, kahan:2, kidhar:2, kitna:2, kitne:2, kitni:2, konsa:2, konsi:2, kisko:2, kiska:2, kiski:2, kisne:2, hota:2, hoti:2, hote:2, hoga:2, hogi:2, karna:2, karni:2, karne:2, karo:2, karein:2, karain:2, karen:2, krain:2, karte:2, karta:2, karti:2, krta:2, krti:2, krte:2, krna:2, kar:1, kr:1, karke:1, seekhna:2, seekhni:2, seekho:2, sikhna:2, sikhao:2, samjhao:2, samajh:2, parhna:2, parhne:2, parhte:2, parhti:2, parhta:2, parho:2, parh:1, likhna:2, likho:2, pooch:2, poocho:2, sawal:2, sawalat:2, jawab:2, masla:2, masail:2, masala:1, kitab:2, kitaab:2, hawala:2, dua:2, duas:1, baat:2, bat:2, baatein:2, bol:2, bolta:2, bolti:2, bolte:2, bolna:2, sunao:2, suno:2, dekho:2, haal:2, hal:1, theek:2, thik:2, sahi:2, sai:2, ghalat:2, galat:2, matlab:2, maqsad:2, zaroori:2, zaroorat:2, madad:2, rehnumai:2, tafseel:2, tarjuma:2, ibarat:2, alfaaz:2, jumla:1, waqt:2, din:1, raat:1, subah:1, sham:1, aaj:1, aj:1, kal:1, abhi:1, kabhi:2, phir:2, lekin:2, magar:2, agar:2, jab:2, tab:2, koi:2, kuch:2, sab:2, log:1, ghar:1, khana:2, milta:2, milti:2, mila:2, mili:2, lagta:1, lagti:2, sakta:2, sakti:2, sakte:2, jata:2, jati:2, jate:2, aata:2, aati:2, aate:2, deta:2, deti:2, leta:2, hona:2, tha:2, thi:2, the:1, hua:2, hui:2, hue:2, aaya:2, aayi:2, dain:2, dein:2, zaroor:1, bohat:2, bahut:2, thora:2, thoda:2, zyada:2, ziada:2, sirf:2, bilkul:2, shayad:2, kyunki:2, kyunke:2, isliye:2, warna:2, saath:2, sath:2, pehle:2, pehlay:2, baad:1, andar:1, bahar:1, paas:1, upar:1, neeche:1, aage:1, peeche:1, liye:2, baray:2, taraf:2, darmiyan:2, shuru:2, khatam:2, dusra:2, doosra:2, acha:2, achha:2, naraz:2, pareshan:2, mushkil:2, asan:2, aasan:2, hamesha:2, ustad:1, ustaad:1, shagird:2, madarsa:2, sahib:1, sahab:1, bhai:1, mera:1, meri:1, mere:1, hamara:2, hamari:2, tumhara:2, tumhari:2, uska:2, iska:2, unka:2, apna:2, apni:2, apne:2, aap:2, ka:1, ki:1, ke:1, mein:1, main:1, mn:2, mai:1, aur:1, nahi:2, nhi:2, ni:2, na:1, kab:1, kon:2, kaun:1, kis:1, bhi:1, se:1, par:1, ne:1, ho:1, ye:1, yeh:1, wo:1, woh:1, is:1, us:1, to:1, do:1, wala:1, wali:1, wale:1, walay:1, gaya:1, gayi:2, gaye:2, raha:1, rahi:2, rahe:2, rha:2, rhi:2, rhe:2, milega:1, deen:2, duniya:2, dunia:2, jannat:2, jahannam:2, gunah:2, gunaah:2, sawab:2, neki:2, farz:2, sunnat:2, nafil:2, makrooh:2, azan:2, adhan:2, azaan:2, sajda:2, ruku:2, sehri:2, ramzan:2, hadees:2, kuran:2, kumayl:2, arbaeen:2, chehlum:2, ghadeer:2, majlis:2, matam:2, azadari:2, nauha:2, manqabat:2, imambargah:2, jaiz:2, najaiz:2, tauba:2, istighfar:2, shukar:2, sabr:2, sabar:2, ilm:2, taleem:2, zuban:2, zubaan:2, urdu:1, quran:1, allah:1, rasool:1, nabi:1, imam:1, surah:1, ayat:1, hadith:1, fiqh:1, halal:1, haram:1, makruh:1, wajib:1, mustahab:2, sunnah:1, islam:1, masjid:1, hajj:1, umrah:1, ziyarat:1, ashura:1, muharram:1, ramadan:1, iftar:1, iftaar:1, taraweeh:1, karbala:1, hussain:1, jumma:2, eid:1, fees:1 };
   var EN_W = { what:2,how:2,why:2,when:2,where:2,who:2,which:2,is:2,are:2,was:2,were:2,do:2,does:2,did:2,can:2,could:2,should:2,would:2,will:2,the:2,please:2,tell:2,explain:2,me:1,my:1,you:1,your:1,it:1,we:1,they:1,about:1,of:1,for:1,from:1,with:1,and:1,or:1,but:1,if:1,not:1,yes:1,very:1,much:1,good:1,day:1,today:1,time:1,people:1,have:1,has:1,been:1,to:1,in:1,on:1,at:1,by:1,know:1,think:1,want:1,need:1,like:1,help:1,talk:1 };
   var URDU_SCRIPT_W = ["ہے","ہیں","میں","کیا","اور","کے","کا","کی","سے","نہیں","آپ","یہ","وہ","بھی","پر","کو","نے","بتائیں","چاہیے","مجھے","میرا","میری","کس","کب","کیوں","کون","کیسے","پڑھیں","پڑھنا","کرتا","رہا","رہی","گا","گی","لیے","مطلب","اگر","لیکن","ہوتا","ملتا","دیں","تھا","تھی","ہوگا","ابھی","بہت","اچھا","شکریہ"];
   var ARABIC_SCRIPT_W = ["كيف","لماذا","متى","أين","الذي","التي","هذا","هذه","ذلك","عند","يجب","يمكن","هي","هو","فيه","عليه","إليه","لأن","عندما","إذا","لكن","سوف","لم","لن"];
@@ -7053,7 +7214,46 @@ document.getElementById("mnav-menu").addEventListener("click", function(){
     if (/\b(hai|hain|hy)\s*[?.!]*$/.test(s.trim().toLowerCase())) rScore += 2;
     if (/\bk(ya|ia)\b[^.?!]*\b(hai|hain|hy)\b/.test(lowT)) rScore += 2;
     if (/\b(mujhe|mujhy|hamein|hamen|tumhe|tumhen|aapko)\b/.test(lowT)) rScore += 2;
+    /* No language signal in the words themselves (a name, "ok", a
+       number): stay in the language the call is already in —
+       never snap back to English mid-call. */
+    if (rScore === 0 && eScore === 0) return LANGS[lastLang] ? lastLang : "en";
     return (rScore >= 3 && rScore >= eScore) || (rScore >= 2 && eScore === 0) ? "roman" : "en";
+  }
+  /* SAME-LANGUAGE GUARANTEE for spoken replies: the AI's reply text
+     is itself language-checked with detectLang(). If it clearly
+     came back in a DIFFERENT language from the one the visitor just
+     spoke, the question is asked ONE more time with an explicit
+     correction, and the corrected reply is spoken when it matches.
+     The call never stalls: if the retry fails or still mismatches,
+     the better of the two texts is used. */
+  function replyLangMismatch(text, want){
+    var t = String(text || "").trim();
+    if (t.length < 25 || !LANGS[want]) return false; /* too short to judge fairly */
+    var got = detectLang(t);
+    if (got === want) return false;
+    if (want === "ur" || want === "ar") return got === "en" || got === "roman"; /* script was asked for, Latin came back */
+    if (got === "ur" || got === "ar") return true; /* Latin was asked for, script came back */
+    return t.length >= 60; /* English vs Roman Urdu: trust the detector on a substantial reply */
+  }
+  /* IMMEDIATE spoken-language detection: while the recogniser is
+     running, the words heard SO FAR are language-checked on every
+     result with detectLang(). When they clearly belong to a
+     DIFFERENT recognition language — an English recogniser hearing
+     clear Roman Urdu, or an Urdu recogniser hearing clear Arabic
+     (or the reverse) — recognition restarts in that language AT
+     ONCE, keeping the words already heard, instead of letting the
+     whole turn finish in the wrong language. Returns the target
+     recognition code, or null when no switch is warranted. */
+  function liveRecogTarget(heard, curCode){
+    var t = String(heard || "");
+    if (t.replace(/\s/g, "").length < 6) return null; /* too little heard to judge */
+    var dc = detectLang(t);
+    var target = dc === "roman" ? "ur" : dc;
+    if (!target || target === curCode) return null;
+    if (curCode === "en") return dc === "roman" ? "ur" : null; /* Latin in: only a clear Roman Urdu signal switches to Urdu */
+    if ((curCode === "ur" && target === "ar") || (curCode === "ar" && target === "ur")) return target;
+    return null;
   }
   /* ---------- AI via the server proxy (JSONP) ---------- */
   function extractText(data){
@@ -7087,6 +7287,17 @@ document.getElementById("mnav-menu").addEventListener("click", function(){
       sc.onerror = function(){ done(null); };
       timer = setTimeout(function(){ done(null); }, timeoutMs || 45000);
       document.head.appendChild(sc);
+    });
+  }
+  /* One AI call for a call turn, with the same-language guarantee
+     applied: a reply that clearly came back in the wrong language
+     is re-asked once with an explicit correction. */
+  function callAI(prompt, lang){
+    return proxyCall(prompt, LANGS[lang].name, 45000).then(function(reply){
+      if (!reply || !replyLangMismatch(reply, lang)) return reply;
+      return proxyCall(prompt + "\n\n[IMPORTANT: your previous reply was NOT in the visitor's language. Say your ENTIRE reply again in " + LANGS[lang].name + " only — the same answer, the same meaning, nothing in any other language.]", LANGS[lang].name, 45000).then(function(r2){
+        return (r2 && !replyLangMismatch(r2, lang)) ? r2 : (r2 || reply);
+      });
     });
   }
   /* ---------- speech synthesis (same-language voice) ---------- */
@@ -7166,6 +7377,7 @@ document.getElementById("mnav-menu").addEventListener("click", function(){
      (echo guard) and the visitor's last accepted line (repeat
      guard). */
   var pendingFinal = "", pendingInterim = "", submitTimer = null;
+  var lvcForceRecog = null, lvcSwitchedTo = {};
   var lastAiText = "", lastUserText = "", lastUserAt = 0;
   var bargeRecog = null, bargeTimer = null;
   function setPhase(p, statusText){
@@ -7193,6 +7405,7 @@ document.getElementById("mnav-menu").addEventListener("click", function(){
   function recogOrder(){
     var order = [];
     function push(c){ if (c && order.indexOf(c) < 0) order.push(c); }
+    if (lvcForceRecog) { push(lvcForceRecog); lvcForceRecog = null; } /* a language just detected live goes first */
     push((LANGS[lastLang] || LANGS.en).recog);
     push("ur"); push("en"); push("ar");
     return order;
@@ -7346,6 +7559,26 @@ document.getElementById("mnav-menu").addEventListener("click", function(){
         setInterim((pendingFinal ? pendingFinal + " " : "") + interim);
         if (pendingFinal) armSubmitTimer(myTurn);
       }
+      /* IMMEDIATE language switch, live: the words heard so far
+         clearly belong to another recognition language — restart
+         recognition in that language right now. The words already
+         heard stay in pendingFinal/pendingInterim, so nothing the
+         visitor said is lost, and the turn is still submitted by
+         the silence timer once they finish. */
+      var ltNow = liveRecogTarget((pendingFinal + " " + pendingInterim).trim(), code);
+      if (ltNow && !lvcSwitchedTo[ltNow]) {
+        lvcSwitchedTo[ltNow] = true;
+        lvcForceRecog = ltNow;
+        listenAttempt = 0;
+        clearSubmitTimer();
+        stopRecog();
+        setTimeout(function(){
+          if (!active || myTurn !== turnSeq || phase !== "listening" || muted || fatalMsg) return;
+          startListen();
+          if ((pendingFinal || pendingInterim) && phase === "listening") armSubmitTimer(myTurn);
+        }, 200);
+        return;
+      }
     };
     recog.onerror = function(ev){
       if (!active || myTurn !== turnSeq) return;
@@ -7393,7 +7626,7 @@ document.getElementById("mnav-menu").addEventListener("click", function(){
     setPhase("thinking", statusFor("thinking", lang));
     var convo = history.slice(-5, -1).map(function(h){ return "User: " + h.u + (h.a ? "\nAssistant: " + h.a : ""); }).join("\n");
     var prompt = SYS + (convo ? "\n\nConversation so far:\n" + convo : "") + "\n\nUser (speaking now): " + text.slice(0, 2000) + "\n\n[" + (LANG_LOCK[lang] || LANG_LOCK.en) + " If you do not know the answer or are not certain, say so briefly and direct the user to ask Qari Sahib on WhatsApp at +92 307 4348899 — do not guess. TONE: speak warmly and naturally, like a friendly helpful friend — relaxed and easy to talk to, never robotic, stiff or overly formal.]";
-    proxyCall(prompt, LANGS[lang].name, 45000).then(function(reply){
+    callAI(prompt, lang).then(function(reply){
       if (!active || myTurn !== turnSeq) return;
       var ans = reply || (TXT.unreachable[lang] || TXT.unreachable.en);
       if (history.length) history[history.length - 1].a = ans;
@@ -7422,6 +7655,7 @@ document.getElementById("mnav-menu").addEventListener("click", function(){
     }
     transcriptEl.innerHTML = "";
     history = []; listenAttempt = 0; turnSeq = 0; fatalMsg = false; muted = false;
+    lvcSwitchedTo = {}; lvcForceRecog = null;
     clearSubmitTimer(); stopBargeRecog();
     pendingFinal = ""; pendingInterim = ""; lastAiText = ""; lastUserText = ""; lastUserAt = 0; interimEl = null;
     muteBtn.classList.remove("on"); muteTxt.textContent = "Mute";
