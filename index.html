@@ -296,9 +296,20 @@ footer.site li{margin:.42rem 0}
 .ai-fab-badge svg{width:12px;height:12px;fill:#fff}
 .ai-fab-label{background:linear-gradient(135deg,var(--emerald-deep),var(--emerald));color:#fff;border:1px solid rgba(212,169,44,.55);border-radius:999px;padding:.42rem .85rem;font-weight:700;font-size:.9rem;line-height:1.15;text-align:left;box-shadow:0 10px 24px rgba(6,63,45,.30)}
 .ai-fab-label small{display:block;font-weight:500;font-size:.72rem;color:#f0d48a}
-.ai-panel{position:fixed;left:18px;bottom:94px;z-index:85;width:min(398px,calc(100vw - 24px));max-height:min(650px,calc(100dvh - 140px));display:flex;flex-direction:column;background:var(--surface);border:1px solid var(--line);border-radius:20px;box-shadow:0 24px 60px rgba(10,28,46,.28);overflow:hidden;opacity:0;visibility:hidden;transform:translateY(14px) scale(.97);transform-origin:bottom left;transition:opacity .25s ease,transform .25s ease,visibility .25s}
+.ai-panel{position:fixed;inset:0;z-index:160;width:100%;height:100dvh;display:flex;flex-direction:column;background:var(--surface);overflow:hidden;opacity:0;visibility:hidden;transform:translateY(100%);transition:opacity .28s ease,transform .28s ease,visibility .28s}
 .ai-panel.open{opacity:1;visibility:visible;transform:none}
-.ai-head{display:flex;align-items:center;gap:.65rem;background:linear-gradient(135deg,var(--emerald-deep),var(--emerald));color:#fff;padding:.7rem .8rem}
+/* Full-screen chat order (WhatsApp / Messenger style): header, suggested
+   questions, big scrolling message area, Qari Sahib button, then the input
+   bar pinned at the very bottom with the small print under it. */
+.ai-head{order:0;flex:none}
+.ai-lock{order:1}
+.ai-chips{order:2;flex:none}
+.ai-msgs{order:3}
+.ai-status{order:4;flex:none}
+.ai-qari-row{order:5;flex:none}
+.ai-inputbar{order:6;flex:none}
+.ai-note{order:7;flex:none}
+.ai-head{display:flex;align-items:center;gap:.65rem;background:linear-gradient(135deg,var(--emerald-deep),var(--emerald));color:#fff;padding:calc(.7rem + env(safe-area-inset-top)) .9rem .7rem}
 .ai-head-img{width:46px;height:46px;border-radius:50%;object-fit:cover;object-position:center 18%;border:2px solid var(--gold-bright);flex:none;background:#fff}
 .ai-head-txt{flex:1;min-width:0}
 .ai-head-txt strong{display:block;font-size:1rem;line-height:1.2}
@@ -306,16 +317,28 @@ footer.site li{margin:.42rem 0}
 .ai-icon-btn{flex:none;width:34px;height:34px;border-radius:50%;border:1px solid rgba(255,255,255,.35);background:rgba(255,255,255,.08);color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer}
 .ai-icon-btn svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
 .ai-icon-btn.off{opacity:.45}
-.ai-chips{display:flex;gap:.4rem;flex-wrap:wrap;padding:.6rem .75rem .15rem}
+.ai-chips{display:flex;gap:.4rem;flex-wrap:wrap;padding:.6rem .75rem .15rem;max-height:30dvh;overflow-y:auto;overscroll-behavior:contain}
+/* Clean-surface rule (owner's request): the suggested questions are a
+   FIRST-VIEW helper only. The moment the visitor asks anything — by
+   typing their own question, tapping a chip, speaking, or sending a
+   photo — the chips, the hint line and the long small-print note all
+   disappear for good and never cover the answers again; the message
+   area then takes the whole middle of the screen and only the slim
+   bottom dock (Qari / Live Voice / typing bar) stays, pinned at the
+   very bottom. A visitor who starts typing their own question, or
+   taps "Hide", clears the chips the same way (chips-off). */
+.ai-panel.started .ai-chips,.ai-panel.chips-off .ai-chips{display:none}
+.ai-panel.started .ai-note,.ai-panel.started .ai-voice-hint{display:none}
+.ai-chips-hide{border:1px dashed var(--line);color:var(--muted);background:transparent;border-radius:999px;padding:.32rem .7rem;font:inherit;font-size:.8rem;font-weight:600;cursor:pointer}
 .ai-chip{border:1px solid var(--gold);color:var(--emerald-deep);background:var(--gold-soft);border-radius:999px;padding:.32rem .7rem;font:inherit;font-size:.8rem;font-weight:600;cursor:pointer}
 @media (prefers-color-scheme: dark){.ai-chip{color:var(--gold-bright);background:transparent}}
-.ai-msgs{flex:1;overflow-y:auto;padding:.8rem .75rem;display:flex;flex-direction:column;gap:.6rem;min-height:180px}
+.ai-msgs{flex:1;overflow-y:auto;padding:1rem .9rem;display:flex;flex-direction:column;gap:.7rem;min-height:0;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
 .ai-row{display:flex;gap:.45rem;align-items:flex-end;max-width:100%}
 .ai-row.user{justify-content:flex-end}
-.ai-mini{width:26px;height:26px;border-radius:50%;object-fit:cover;object-position:center 18%;flex:none;border:1.5px solid var(--gold-bright)}
-.ai-bubble{background:var(--card);border:1px solid var(--line);border-radius:14px 14px 14px 4px;padding:.6rem .75rem;font-size:.92rem;line-height:1.55;max-width:calc(100% - 34px);overflow-wrap:break-word}
-.ai-row.user .ai-bubble{background:var(--emerald);border-color:var(--emerald);color:#fff;border-radius:14px 14px 4px 14px;max-width:88%}
-.ai-bubble p{margin:0 0 .5rem}
+.ai-mini{width:30px;height:30px;border-radius:50%;object-fit:cover;object-position:center 18%;flex:none;border:1.5px solid var(--gold-bright)}
+.ai-bubble{background:var(--card);border:1px solid var(--line);border-radius:16px 16px 16px 6px;padding:.7rem .85rem;font-size:.97rem;line-height:1.65;max-width:min(calc(100% - 38px),640px);overflow-wrap:break-word}
+.ai-row.user .ai-bubble{background:var(--emerald);border-color:var(--emerald);color:#fff;border-radius:16px 16px 6px 16px;max-width:min(88%,640px)}
+.ai-bubble p{margin:0 0 .55rem}
 .ai-bubble p:last-child{margin-bottom:0}
 .ai-title{font-weight:700;color:var(--head)}
 .ai-ar{font-family:"Amiri",serif;font-size:1.28rem;line-height:2.05;direction:rtl;text-align:right;background:var(--emerald-soft);border-radius:10px;padding:.45rem .7rem;margin:.35rem 0 .15rem;overflow-wrap:break-word}
@@ -335,45 +358,34 @@ footer.site li{margin:.42rem 0}
 @keyframes aiBlink{0%,80%,100%{opacity:.25;transform:translateY(0)}40%{opacity:1;transform:translateY(-3px)}}
 .ai-status{padding:.35rem .85rem;font-size:.8rem;color:var(--emerald-deep);background:var(--emerald-soft);font-weight:600}
 @media (prefers-color-scheme: dark){.ai-status{color:var(--gold-bright)}}
-.ai-inputbar{display:flex;flex-direction:column;gap:.55rem;padding:.6rem .7rem;border-top:1px solid var(--line);background:var(--surface)}
-.ai-type-row{display:flex;gap:.45rem;align-items:center;width:100%}
-.ai-inputbar input{flex:1;min-width:0;border:1.5px solid var(--line);border-radius:999px;padding:.55rem .9rem;font:inherit;font-size:.92rem;background:var(--card);color:var(--ink)}
-.ai-btn-row{display:flex;gap:.7rem;width:100%;align-items:center}
-.ai-voice-hero{flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;gap:.32rem;text-align:center}
-.ai-voice-cap{display:flex;flex-direction:column;align-items:center;line-height:1.2}
-.ai-voice-cap strong{font-size:1.12rem;font-weight:800;letter-spacing:.01em;color:var(--emerald-deep)}
-@media (prefers-color-scheme: dark){.ai-voice-cap strong{color:#3ddc84}}
-.ai-voice-cap small{font-size:.74rem;font-weight:600;color:var(--muted)}
-.ai-voice-hint{margin:0;font-size:.82rem;font-weight:600;line-height:1.45;color:var(--emerald-deep);text-align:center}
+.ai-inputbar{display:flex;flex-direction:column;gap:.4rem;padding:.5rem .7rem calc(.55rem + env(safe-area-inset-bottom));border-top:1px solid var(--line);background:var(--surface)}
+.ai-type-row{display:flex;gap:.5rem;align-items:center;width:100%}
+.ai-inputbar input{flex:1;min-width:0;border:1.5px solid var(--line);border-radius:999px;padding:.62rem 1rem;font:inherit;font-size:1rem;min-height:48px;background:var(--card);color:var(--ink)}
+.ai-voice-hint{margin:0;font-size:.8rem;font-weight:600;line-height:1.4;color:var(--emerald-deep);text-align:center}
 @media (prefers-color-scheme: dark){.ai-voice-hint{color:#3ddc84}}
-.ai-btn-txt{display:flex;flex-direction:column;align-items:flex-start;text-align:start;line-height:1.15;min-width:0}
-.ai-btn-txt strong{font-size:1.02rem;font-weight:800;letter-spacing:.01em}
-.ai-btn-txt small{font-size:.72rem;font-weight:600;opacity:.88;white-space:nowrap}
 .ai-inputbar input:focus{outline:none;border-color:var(--gold)}
-.ai-send{flex:none;width:46px;height:46px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer}
-.ai-mic{position:relative;flex:none;width:88px;height:88px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;background:radial-gradient(circle at 32% 28%,#3ae374,#12b76a 55%,#0a7a43);color:#fff;border:3px solid #0a7a43;box-shadow:0 10px 26px rgba(10,122,67,.45),inset 0 2px 6px rgba(255,255,255,.35);font:inherit;padding:0}
-.ai-mic::after{content:"";position:absolute;inset:-3px;border-radius:50%;border:3px solid rgba(18,183,106,.65);animation:aiMicPulse 1.9s ease-out infinite;pointer-events:none}
+.ai-send{flex:none;width:48px;height:48px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer}
+.ai-mic{position:relative;flex:none;width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;background:radial-gradient(circle at 32% 28%,#3ae374,#12b76a 55%,#0a7a43);color:#fff;border:2px solid #0a7a43;box-shadow:0 4px 12px rgba(10,122,67,.35),inset 0 2px 4px rgba(255,255,255,.35);font:inherit;padding:0}
+.ai-mic::after{content:"";position:absolute;inset:-2px;border-radius:50%;border:2px solid rgba(18,183,106,.65);animation:aiMicPulse 1.9s ease-out infinite;pointer-events:none}
 @keyframes aiMicPulse{0%{transform:scale(1);opacity:.85}70%{transform:scale(1.38);opacity:0}100%{transform:scale(1.38);opacity:0}}
-.ai-mic svg{width:42px;height:42px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none}
-.ai-send svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.ai-mic svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.ai-send svg{width:21px;height:21px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
 .ai-mic.listening{background:radial-gradient(circle at 32% 28%,#ff7a70,#e0342b 55%,#b3261e);border-color:#b3261e;color:#fff;animation:aiBlink 1s infinite}
 .ai-mic.listening::after{border-color:rgba(224,52,43,.65)}
-.ai-attach{background:linear-gradient(135deg,#2f6fb4,#173f73);color:#fff;border:2px solid #173f73;box-shadow:0 6px 16px rgba(23,63,115,.30);flex:0 0 96px;min-width:0;min-height:64px;border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.3rem;cursor:pointer;font:inherit;padding:.5rem .35rem}
-.ai-attach .ai-btn-txt{align-items:center;text-align:center}
-.ai-attach .ai-btn-txt small{white-space:normal}
-.ai-attach svg{width:26px;height:26px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.ai-attach{background:linear-gradient(135deg,#2f6fb4,#173f73);color:#fff;border:2px solid #173f73;box-shadow:0 4px 12px rgba(23,63,115,.28);flex:none;width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;font:inherit;padding:0}
+.ai-attach svg{width:21px;height:21px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none}
 .ai-attach:disabled{opacity:.45;cursor:not-allowed}
 .ai-userimg{display:block;width:100%;max-width:230px;border-radius:10px;margin-bottom:.4rem}
 .ai-send{background:linear-gradient(135deg,var(--emerald),var(--emerald-deep));color:#fff;border:none}
 .ai-note{margin:0;padding:.5rem .85rem .7rem;font-size:.76rem;line-height:1.45;color:var(--muted);text-align:center;border-top:1px dashed var(--line)}
 .ai-note a{color:var(--emerald);font-weight:600}
-.ai-qari-row{padding:.55rem .7rem .1rem;background:var(--surface)}
-.ai-qari-btn{display:flex;align-items:center;justify-content:center;gap:.5rem;background:#1faa55;color:#fff;border-radius:12px;padding:.7rem 1rem;font-size:.95rem;font-weight:700;text-decoration:none;min-height:48px}
+.ai-qari-row{padding:.4rem .7rem 0;background:var(--surface)}
+.ai-qari-btn{display:flex;align-items:center;justify-content:center;gap:.5rem;background:#1faa55;color:#fff;border-radius:12px;padding:.5rem 1rem;font-size:.92rem;font-weight:700;text-decoration:none;min-height:44px}
 .ai-qari-btn svg{width:20px;height:20px;fill:currentColor;flex:none}
 .ai-qari-ask{display:flex;align-items:center;justify-content:center;gap:.5rem;background:#1faa55;color:#fff;border-radius:10px;padding:.6rem .9rem;font-size:.9rem;font-weight:700;text-decoration:none;margin-top:.6rem;min-height:46px}
 .ai-qari-ask svg{width:19px;height:19px;fill:currentColor;flex:none}
 .ai-lock{display:none;padding:1.5rem 1.15rem 1.6rem;text-align:center;flex-direction:column;align-items:center;gap:.55rem}
-.ai-panel.locked .ai-lock{display:flex;overflow-y:auto}
+.ai-panel.locked .ai-lock{display:flex;overflow-y:auto;flex:1;justify-content:center}
 .ai-panel.locked .ai-chips,.ai-panel.locked .ai-msgs,.ai-panel.locked .ai-inputbar,.ai-panel.locked .ai-note,.ai-panel.locked .ai-qari-row{display:none}
 .ai-lock-icon{width:54px;height:54px;border-radius:50%;background:var(--gold-soft);border:1.5px solid var(--gold);display:flex;align-items:center;justify-content:center;color:var(--emerald-deep)}
 .ai-lock-icon svg{width:26px;height:26px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
@@ -388,7 +400,6 @@ footer.site li{margin:.42rem 0}
 @media(max-width:860px){
   .ai-fab{left:14px;bottom:calc(78px + env(safe-area-inset-bottom))}
   .ai-fab-label{display:none}
-  .ai-panel{left:12px;right:12px;width:auto;bottom:calc(152px + env(safe-area-inset-bottom));max-height:calc(100dvh - 250px)}
 }
 @media print{.ai-fab,.ai-panel{display:none!important}}
 @media (prefers-reduced-motion: reduce){.ai-fab::after,.ai-typing i,.ai-mic.listening,.ai-mic::after{animation:none}}
@@ -606,7 +617,12 @@ nav.main a.nav-free{font-weight:700;color:var(--emerald)}
 .fc-head-txt{flex:1;min-width:0}
 .fc-head-txt strong{display:block;font-size:1.12rem;line-height:1.25}
 .fc-head-txt span{display:block;font-size:.8rem;opacity:.9;line-height:1.35}
-.fc-chips{display:flex;gap:.45rem;flex-wrap:wrap;padding:.8rem 1rem .2rem}
+.fc-chips{display:flex;gap:.45rem;flex-wrap:wrap;padding:.8rem 1rem .2rem;max-height:180px;overflow-y:auto;overscroll-behavior:contain}
+/* Same clean-surface rule as the AI Assistant: suggested questions show
+   on the first view only — once the visitor asks anything (or starts
+   typing their own question) they disappear and never cover the
+   answers. Clearing the chat starts a fresh first view, so they return. */
+.fc-shell.started .fc-chips,.fc-shell.chips-off .fc-chips{display:none}
 .fc-chip{border:1px solid var(--gold);color:var(--emerald-deep);background:var(--gold-soft);border-radius:999px;padding:.45rem .85rem;font:inherit;font-size:.85rem;font-weight:600;cursor:pointer;min-height:40px}
 @media (prefers-color-scheme: dark){.fc-chip{color:var(--gold-bright);background:transparent}}
 .fc-msgs{overflow-y:auto;padding:1rem;display:flex;flex-direction:column;gap:.75rem;min-height:360px;max-height:58vh}
@@ -667,11 +683,11 @@ nav.main a.nav-free{font-weight:700;color:var(--emerald)}
 .fc-live strong{font-size:.98rem;font-weight:800}
 .fc-live small{font-size:.7rem;font-weight:600;opacity:.92}
 .fc-live:active{transform:scale(.97)}
-.ai-live-row{margin-top:.6rem}
-.ai-live{width:100%;display:flex;align-items:center;justify-content:center;gap:.6rem;background:linear-gradient(135deg,#0a7a43,#12b76a);color:#fff;border:2px solid #0a7a43;border-radius:999px;padding:.6rem 1rem;font:inherit;cursor:pointer;min-height:54px;box-shadow:0 8px 20px rgba(10,122,67,.3)}
-.ai-live svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.ai-live-row{margin:0}
+.ai-live{width:100%;display:flex;align-items:center;justify-content:center;gap:.55rem;background:linear-gradient(135deg,#0a7a43,#12b76a);color:#fff;border:2px solid #0a7a43;border-radius:999px;padding:.35rem .9rem;font:inherit;cursor:pointer;min-height:44px;box-shadow:0 5px 14px rgba(10,122,67,.25)}
+.ai-live svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none}
 .ai-live span{display:flex;flex-direction:column;line-height:1.15;text-align:left}
-.ai-live strong{font-size:1rem;font-weight:800}
+.ai-live strong{font-size:.95rem;font-weight:800}
 .ai-live small{font-size:.7rem;font-weight:600;opacity:.92}
 .ai-live:disabled{opacity:.45;cursor:not-allowed;box-shadow:none}
 .lvc-overlay{position:fixed;inset:0;z-index:200;background:rgba(4,26,18,.9);display:flex;align-items:center;justify-content:center;padding:14px}
@@ -2211,20 +2227,15 @@ nav.main a.nav-free{font-weight:700;color:var(--emerald)}
   <div class="ai-msgs" id="ai-msgs" aria-live="polite"></div>
   <div class="ai-status" id="ai-status" hidden>Listening… auto-detecting your language — speak now</div>
   <form class="ai-inputbar" id="ai-form">
-    <div class="ai-type-row">
-      <input id="ai-input" type="text" placeholder="Ask anything — fiqh, study help, general chat…" autocomplete="off" aria-label="Type your question" disabled />
-      <button type="submit" class="ai-send" aria-label="Send question" disabled><svg viewBox="0 0 24 24"><path d="M22 2 11 13"/><path d="M22 2l-7 20-4-9-9-4 20-7Z"/></svg></button>
-    </div>
-    <div class="ai-btn-row">
-      <button type="button" class="ai-attach" id="ai-attach" aria-label="Photo — send a photo of an Arabic page for its Urdu translation" title="Photo — Arabic page photo" disabled><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h3l2-2.5h6L17 8h3a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1Z"/><circle cx="12" cy="14" r="3.4"/></svg><span class="ai-btn-txt"><strong>Photo</strong><small>Arabic page photo</small></span></button>
-      <input type="file" id="ai-file" accept="image/*" hidden />
-      <div class="ai-voice-hero" id="ai-voice-hero">
-        <button type="button" class="ai-mic" id="ai-mic" aria-label="Voice — tap and speak your question" title="Voice — tap &amp; speak" disabled><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a3 3 0 0 1 3 3v5a3 3 0 0 1-6 0V6a3 3 0 0 1 3-3Z"/><path d="M5 11a7 7 0 0 0 14 0"/><path d="M12 18v3"/></svg></button>
-        <span class="ai-voice-cap"><strong>Voice</strong><small>Tap &amp; speak — any language</small></span>
-      </div>
-    </div>
     <div class="ai-live-row">
       <button type="button" class="ai-live" id="ai-livecall" aria-label="Live Voice — start a voice call with the AI Assistant" title="Live Voice — talk like a phone call" disabled><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 2 .7 2.9a2 2 0 0 1-.5 2.1L8 10a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.5c.9.3 1.9.6 2.9.7a2 2 0 0 1 1.7 2Z"/></svg><span><strong>Live Voice</strong><small>Talk like a phone call — hands-free</small></span></button>
+    </div>
+    <div class="ai-type-row">
+      <button type="button" class="ai-attach" id="ai-attach" aria-label="Photo — send a photo of an Arabic page for its Urdu translation" title="Photo — Arabic page photo" disabled><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h3l2-2.5h6L17 8h3a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1Z"/><circle cx="12" cy="14" r="3.4"/></svg></button>
+      <input type="file" id="ai-file" accept="image/*" hidden />
+      <input id="ai-input" type="text" placeholder="Ask anything — fiqh, study help, general chat…" autocomplete="off" aria-label="Type your question" disabled />
+      <button type="button" class="ai-mic" id="ai-mic" aria-label="Voice — tap and speak your question" title="Voice — tap &amp; speak" disabled><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a3 3 0 0 1 3 3v5a3 3 0 0 1-6 0V6a3 3 0 0 1 3-3Z"/><path d="M5 11a7 7 0 0 0 14 0"/><path d="M12 18v3"/></svg></button>
+      <button type="submit" class="ai-send" aria-label="Send question" disabled><svg viewBox="0 0 24 24"><path d="M22 2 11 13"/><path d="M22 2l-7 20-4-9-9-4 20-7Z"/></svg></button>
     </div>
     <p class="ai-voice-hint">Tap the mic and speak your question — or start Live Voice and just talk, like a phone call</p>
   </form>
@@ -5553,18 +5564,36 @@ document.getElementById("mnav-menu").addEventListener("click", function(){
     if (fileInput) fileInput.click();
   });
   chipsBox.appendChild(photoChip);
+  /* "Hide" — a first-view visitor who wants none of the suggested
+     questions can clear them at once for a clean surface. */
+  var hideChip = document.createElement("button");
+  hideChip.type = "button"; hideChip.className = "ai-chips-hide";
+  hideChip.textContent = "✕ Hide suggestions";
+  hideChip.setAttribute("aria-label", "Hide the suggested questions");
+  hideChip.addEventListener("click", function(){ panel.classList.add("chips-off"); setTimeout(scrollDown, 60); });
+  chipsBox.appendChild(hideChip);
+  /* Typing your OWN question means the suggested questions are not
+     wanted: clear them away as soon as typing starts, so the answer
+     area is clean before the question is even sent. */
+  input.addEventListener("input", function(){
+    if (input.value && input.value.trim()) panel.classList.add("chips-off");
+  });
 
   function waHref(msg){
     try { return waLink(msg); } catch (e) { return "https://wa.me/923074348899?text=" + encodeURIComponent(msg); }
   }
   function scrollDown(){ msgs.scrollTop = msgs.scrollHeight; }
   function addUserMsg(text){
+    /* First real question asked: the chat has started — suggested
+       questions, hint and small print leave the surface for good. */
+    panel.classList.add("started");
     var row = document.createElement("div"); row.className = "ai-row user";
     var bub = document.createElement("div"); bub.className = "ai-bubble";
     var p = document.createElement("p"); p.textContent = text; p.dir = "auto";
     bub.appendChild(p); row.appendChild(bub); msgs.appendChild(row); scrollDown();
   }
   function addUserImage(dataUrl){
+    panel.classList.add("started");
     var row = document.createElement("div"); row.className = "ai-row user";
     var bub = document.createElement("div"); bub.className = "ai-bubble";
     var im = document.createElement("img"); im.className = "ai-userimg"; im.src = dataUrl; im.alt = "Photo of an Arabic page you sent";
@@ -5749,6 +5778,27 @@ document.getElementById("mnav-menu").addEventListener("click", function(){
     var txt = res.voice ? (VOICE_NOTE[lang] || VOICE_NOTE.en)(want, voiceNameFor(res.voice.lang, lang)) : (VOICE_NONE_NOTE[lang] || VOICE_NONE_NOTE.en);
     addAssistant({ paras: [txt], lang: lang });
   }
+  /* VOICE-CHANGE FIX (owner: "awaz change nahi hoi, purani hi hai"):
+     two real causes are fixed here.
+     (1) On Chrome/Android, getVoices() returns an EMPTY list until
+         the browser fires voiceschanged — speaking in that window
+         silently used the phone's OLD default voice and the deep
+         male selection never applied. speak() now WAITS for the
+         voice list (once, max ~900ms) before choosing a voice.
+     (2) The delivery itself is now audibly different from the old
+         one: pitch 0.72 (was 0.9) and rate 0.93 (was 0.98) — a
+         clearly deeper, slower, Qari-like male delivery, on top of
+         the male-voice-first selection in pickVoice(). */
+  var voicesWaited = false;
+  function whenVoicesReady(cb){
+    loadVoices();
+    if (VOICES.length || voicesWaited || !("speechSynthesis" in window)) { cb(); return; }
+    voicesWaited = true;
+    var done = false;
+    function go(){ if (done) return; done = true; loadVoices(); cb(); }
+    try { window.speechSynthesis.addEventListener("voiceschanged", function h(){ try { window.speechSynthesis.removeEventListener("voiceschanged", h); } catch (e) {} go(); }); } catch (e) {}
+    setTimeout(go, 900);
+  }
   function speak(text, force, lang){
     if (!aiSignedIn()) return;
     if (!soundOn && !force) return;
@@ -5756,6 +5806,9 @@ document.getElementById("mnav-menu").addEventListener("click", function(){
       if (!shownVoiceNotes["nosynth"]) { shownVoiceNotes["nosynth"] = true; addAssistant({ paras: [VOICE_NONE_NOTE[lang] || VOICE_NONE_NOTE.en], lang: lang }); }
       return;
     }
+    whenVoicesReady(function(){ speakNow(text, force, lang); });
+  }
+  function speakNow(text, force, lang){
     loadVoices();
     var meta = LANGS[lang] || LANGS.en;
     var res = resolveVoice(lang);
@@ -5780,8 +5833,8 @@ document.getElementById("mnav-menu").addEventListener("click", function(){
         } else {
           u.lang = meta.bcp;
         }
-        u.rate = 0.98;
-        u.pitch = 0.9; /* deeper tone — a man's voice, like a Qari's */
+        u.rate = 0.93;
+        u.pitch = 0.72; /* deep male tone — clearly deeper than the old voice */
         window.speechSynthesis.speak(u);
       });
     } catch (e) {}
@@ -6220,12 +6273,18 @@ document.getElementById("mnav-menu").addEventListener("click", function(){
     panel.classList.toggle("open", on);
     panel.setAttribute("aria-hidden", on ? "false" : "true");
     fab.setAttribute("aria-expanded", on ? "true" : "false");
+    /* Full-screen chat: the page behind it must not scroll. */
+    document.body.style.overflow = on ? "hidden" : "";
     if (on) {
       if (paintAiGate()) {
         if (!greeted) { greeted = true; addAssistant(GREETING); }
         setTimeout(function(){ try { input.focus(); } catch (e) {} }, 280);
+        setTimeout(scrollDown, 320);
+      } else {
+        setTimeout(scrollDown, 320);
       }
     } else {
+      panel.style.height = "";
       if ("speechSynthesis" in window) { try { window.speechSynthesis.cancel(); } catch (e) {} }
       if (listening) { try { recog.stop(); } catch (e) {} setListening(false); }
     }
@@ -6233,6 +6292,25 @@ document.getElementById("mnav-menu").addEventListener("click", function(){
   fab.addEventListener("click", function(){ setOpen(!opened); });
   document.getElementById("ai-close").addEventListener("click", function(){ setOpen(false); });
   document.addEventListener("keydown", function(e){ if (e.key === "Escape" && opened) setOpen(false); });
+  /* Keyboard room: the panel is sized with 100dvh, so when the on-screen
+     keyboard opens the chat area shrinks — keep the input bar and the
+     newest messages in view by scrolling to the latest message whenever
+     the visible viewport changes or the input gains focus. */
+  if (window.visualViewport) {
+    var vvScrollT = null;
+    window.visualViewport.addEventListener("resize", function(){
+      if (!opened) return;
+      /* Buttons at the very bottom (owner's request): while the
+         on-screen keyboard is open, shrink the panel to the VISIBLE
+         viewport so the typing bar sits directly above the keyboard
+         and the newest answer stays visible above it — instead of
+         the bar hiding behind the keyboard mid-screen. */
+      panel.style.height = window.visualViewport.height + "px";
+      clearTimeout(vvScrollT);
+      vvScrollT = setTimeout(scrollDown, 60);
+    });
+  }
+  input.addEventListener("focus", function(){ setTimeout(scrollDown, 250); });
   soundBtn.addEventListener("click", function(){
     soundOn = !soundOn;
     soundBtn.classList.toggle("off", !soundOn);
@@ -6278,6 +6356,7 @@ document.getElementById("mnav-menu").addEventListener("click", function(){
   var sendBtn = document.getElementById("fc-send");
   var statusEl = document.getElementById("fc-status");
   var chipsBox = document.getElementById("fc-chips");
+  var shell = document.getElementById("fc-shell");
   var soundBtn = document.getElementById("fc-sound");
   var clearBtn = document.getElementById("fc-clear");
   if (!msgs || !form || !input || !micBtn) return;
@@ -6579,8 +6658,23 @@ document.getElementById("mnav-menu").addEventListener("click", function(){
     }
     return null;
   }
+  /* Same voice-change fix as the AI Assistant: wait for the device
+     voice list before speaking (an empty list silently fell back to
+     the phone's OLD default voice), then speak with the deeper male
+     delivery — pitch 0.72, rate 0.93. */
+  var fcVoicesWaited = false;
+  function fcWhenVoicesReady(cb){
+    loadVoices();
+    if (VOICES.length || fcVoicesWaited || !("speechSynthesis" in window)) { cb(); return; }
+    fcVoicesWaited = true;
+    var done = false;
+    function go(){ if (done) return; done = true; loadVoices(); cb(); }
+    try { window.speechSynthesis.addEventListener("voiceschanged", function h(){ try { window.speechSynthesis.removeEventListener("voiceschanged", h); } catch (e) {} go(); }); } catch (e) {}
+    setTimeout(go, 900);
+  }
   function speak(text, lang){
     if (!("speechSynthesis" in window)) return;
+    fcWhenVoicesReady(function(){
     loadVoices();
     try {
       window.speechSynthesis.cancel();
@@ -6589,11 +6683,12 @@ document.getElementById("mnav-menu").addEventListener("click", function(){
         var u = new SpeechSynthesisUtterance(seg);
         var v = pickVoice(lang);
         if (v) { u.voice = v; u.lang = v.lang; } else { u.lang = (LANGS[lang] || LANGS.en).bcp; }
-        u.rate = 0.98;
-        u.pitch = 0.9; /* deeper tone — a man's voice, like a Qari's */
+        u.rate = 0.93;
+        u.pitch = 0.72; /* deep male tone — clearly deeper than the old voice */
         window.speechSynthesis.speak(u);
       });
     } catch (e) {}
+    });
   }
 
   /* ---------------- Listening (auto-detect spoken language) ---------------- */
@@ -6874,6 +6969,9 @@ document.getElementById("mnav-menu").addEventListener("click", function(){
     var lang = detectLang(q);
     lastLang = lang;
     addUser(q);
+    /* First question asked: suggested questions leave the surface
+       for good — the answers get the full clean chat area. */
+    if (shell) shell.classList.add("started");
     input.value = "";
     input.style.height = "auto";
     if (isGreeting(q)) {
@@ -6924,6 +7022,8 @@ document.getElementById("mnav-menu").addEventListener("click", function(){
     if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); ask(input.value, false); }
   });
   input.addEventListener("input", function(){
+    /* Typing your own question clears the first-view suggestions. */
+    if (shell && input.value && input.value.trim()) shell.classList.add("chips-off");
     input.style.height = "auto";
     input.style.height = Math.min(input.scrollHeight, 150) + "px";
   });
@@ -6957,6 +7057,8 @@ document.getElementById("mnav-menu").addEventListener("click", function(){
     if (!soundOn && "speechSynthesis" in window) { try { window.speechSynthesis.cancel(); } catch (e) {} }
   });
   if (clearBtn) clearBtn.addEventListener("click", function(){
+    /* A cleared chat is a fresh first view: suggestions return. */
+    if (shell) shell.classList.remove("started", "chips-off");
     msgs.innerHTML = "";
     if ("speechSynthesis" in window) { try { window.speechSynthesis.cancel(); } catch (e) {} }
     var g = GREETING.en;
@@ -7332,8 +7434,25 @@ document.getElementById("mnav-menu").addEventListener("click", function(){
     return null;
   }
   var speechFinish = null, speechTimer = null;
+  /* Same voice-change fix as the chats: wait for the device voice
+     list before speaking (an empty list silently fell back to the
+     phone's OLD default voice), then speak deeper — pitch 0.72,
+     rate 0.93 — with the male-voice-first selection above. */
+  var lvcVoicesWaited = false;
+  function lvcWhenVoicesReady(cb){
+    loadVoices();
+    if (VOICES.length || lvcVoicesWaited || !("speechSynthesis" in window)) { cb(); return; }
+    lvcVoicesWaited = true;
+    var done = false;
+    function go(){ if (done) return; done = true; loadVoices(); cb(); }
+    try { window.speechSynthesis.addEventListener("voiceschanged", function h(){ try { window.speechSynthesis.removeEventListener("voiceschanged", h); } catch (e) {} go(); }); } catch (e) {}
+    setTimeout(go, 900);
+  }
   function speak(text, lang, onDone){
     if (!("speechSynthesis" in window)) { onDone && onDone(); return; }
+    lvcWhenVoicesReady(function(){ speakNow(text, lang, onDone); });
+  }
+  function speakNow(text, lang, onDone){
     loadVoices();
     stopSpeaking();
     var chunks = [];
@@ -7349,14 +7468,14 @@ document.getElementById("mnav-menu").addEventListener("click", function(){
     var totalChars = chunks.join(" ").length;
     /* Safety net: some mobile browsers drop utterance onend — never
        let the call get stuck in "speaking". */
-    speechTimer = setTimeout(finish, Math.max(5000, totalChars * 110) + 4000);
+    speechTimer = setTimeout(finish, Math.max(5000, totalChars * 118) + 4000);
     try {
       chunks.forEach(function(seg, idx){
         var u = new SpeechSynthesisUtterance(seg);
         var v = pickVoice(lang);
         if (v) { u.voice = v; u.lang = v.lang; } else { u.lang = (LANGS[lang] || LANGS.en).bcp; }
-        u.rate = 1.0;
-        u.pitch = 0.9; /* deeper tone — a man's voice, like a Qari's */
+        u.rate = 0.93;
+        u.pitch = 0.72; /* deep male tone — clearly deeper than the old voice */
         if (idx === chunks.length - 1) { u.onend = finish; u.onerror = finish; }
         window.speechSynthesis.speak(u);
       });
